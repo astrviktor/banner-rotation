@@ -1,6 +1,9 @@
 package storage
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 // Slot - место на сайте, на котором мы показываем баннер.
 type Slot struct {
@@ -41,3 +44,7 @@ const (
 	Click ActionType = 1
 	Show  ActionType = 2
 )
+
+func NewUuidId() string {
+	return uuid.New().String()
+}
