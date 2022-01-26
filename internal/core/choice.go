@@ -1,9 +1,10 @@
 package core
 
 import (
+	"math"
+
 	"github.com/astrviktor/banner-rotation/internal/storage"
 	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
-	"math"
 )
 
 func GetBanner(s *memorystorage.Storage, idSlot, idSegment string) (string, error) {
@@ -46,7 +47,7 @@ func GetBanner(s *memorystorage.Storage, idSlot, idSegment string) (string, erro
 	ln := math.Log(float64(showsSum)) / math.Log(math.E)
 
 	var maxWeight float64
-	resultIdBanner := ""
+	resultIDBanner := ""
 
 	for _, idBanner := range idBanners {
 		showCount := shows[idBanner]
@@ -56,9 +57,9 @@ func GetBanner(s *memorystorage.Storage, idSlot, idSegment string) (string, erro
 
 		if weight > maxWeight {
 			maxWeight = weight
-			resultIdBanner = idBanner
+			resultIDBanner = idBanner
 		}
 	}
 
-	return resultIdBanner, nil
+	return resultIDBanner, nil
 }

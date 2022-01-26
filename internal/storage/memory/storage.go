@@ -2,9 +2,10 @@ package memorystorage
 
 import (
 	"context"
-	"github.com/astrviktor/banner-rotation/internal/storage"
 	"sync"
 	"time"
+
+	"github.com/astrviktor/banner-rotation/internal/storage"
 )
 
 type Storage struct {
@@ -40,21 +41,21 @@ func (s *Storage) Close(ctx context.Context) error {
 
 func (s *Storage) CreateSlot(slot storage.Slot) error {
 	s.mutex.Lock()
-	s.slots[slot.Id] = slot
+	s.slots[slot.ID] = slot
 	s.mutex.Unlock()
 	return nil
 }
 
 func (s *Storage) CreateBanner(banner storage.Banner) error {
 	s.mutex.Lock()
-	s.banners[banner.Id] = banner
+	s.banners[banner.ID] = banner
 	s.mutex.Unlock()
 	return nil
 }
 
 func (s *Storage) CreateSegment(segment storage.Segment) error {
 	s.mutex.Lock()
-	s.segments[segment.Id] = segment
+	s.segments[segment.ID] = segment
 	s.mutex.Unlock()
 	return nil
 }
@@ -68,9 +69,9 @@ func (s *Storage) CreateRotation(rotation storage.Rotation) error {
 
 func (s *Storage) DeleteRotation(rotation storage.Rotation) error {
 	s.mutex.Lock()
-	for idx, r := range s.rotations {
-		if r.IdSlot == rotation.IdSlot && r.IdBanner == rotation.IdBanner {
-			s.rotations = append(s.rotations[:idx], s.rotations[idx+1:]...)
+	for IDx, r := range s.rotations {
+		if r.IDSlot == rotation.IDSlot && r.IDBanner == rotation.IDBanner {
+			s.rotations = append(s.rotations[:IDx], s.rotations[IDx+1:]...)
 			break
 		}
 	}
@@ -81,9 +82,9 @@ func (s *Storage) DeleteRotation(rotation storage.Rotation) error {
 func (s *Storage) AddEvent(idSlot, idBanner, idSegment string, action storage.ActionType) error {
 	event := storage.Event{
 		Action:    action,
-		IdSlot:    idSlot,
-		IdBanner:  idBanner,
-		IdSegment: idSegment,
+		IDSlot:    idSlot,
+		IDBanner:  idBanner,
+		IDSegment: idSegment,
 		Date:      time.Now().UTC(),
 	}
 
@@ -98,8 +99,8 @@ func (s *Storage) GetBannersForRotations(idSlot string) ([]string, error) {
 
 	s.mutex.RLock()
 	for _, rotation := range s.rotations {
-		if rotation.IdSlot == idSlot {
-			res = append(res, rotation.IdBanner)
+		if rotation.IDSlot == idSlot {
+			res = append(res, rotation.IDBanner)
 		}
 	}
 	s.mutex.RUnlock()
@@ -112,7 +113,7 @@ func (s *Storage) GetCountActionsForBannerAndSegment(idBanner, idSegment string,
 
 	s.mutex.RLock()
 	for _, event := range s.events {
-		if event.IdBanner == idBanner && event.IdSegment == idSegment && event.Action == action {
+		if event.IDBanner == idBanner && event.IDSegment == idSegment && event.Action == action {
 			count++
 		}
 	}
