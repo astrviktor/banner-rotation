@@ -78,12 +78,12 @@ func (s *Storage) DeleteRotation(rotation storage.Rotation) error {
 	return nil
 }
 
-func (s *Storage) AddEvent(action storage.ActionType, rotation storage.Rotation, IdSegment string) error {
+func (s *Storage) AddEvent(idSlot, idBanner, idSegment string, action storage.ActionType) error {
 	event := storage.Event{
 		Action:    action,
-		IdSlot:    rotation.IdSlot,
-		IdBanner:  rotation.IdBanner,
-		IdSegment: IdSegment,
+		IdSlot:    idSlot,
+		IdBanner:  idBanner,
+		IdSegment: idSegment,
 		Date:      time.Now().UTC(),
 	}
 
@@ -91,4 +91,32 @@ func (s *Storage) AddEvent(action storage.ActionType, rotation storage.Rotation,
 	s.events = append(s.events, event)
 	s.mutex.Unlock()
 	return nil
+}
+
+func (s *Storage) GetBannersForRotations(idSlot string) ([]string, error) {
+	var res []string
+
+	s.mutex.RLock()
+	for _, rotation := range s.rotations {
+		if rotation.IdSlot == idSlot {
+			res = append(res, rotation.IdBanner)
+		}
+	}
+	s.mutex.RUnlock()
+
+	return res, nil
+}
+
+func (s *Storage) GetCountActionsForBannerAndSegment(idBanner, idSegment string, action storage.ActionType) int {
+	count := 0
+
+	s.mutex.RLock()
+	for _, event := range s.events {
+		if event.IdBanner == idBanner && event.IdSegment == idSegment && event.Action == action {
+			count++
+		}
+	}
+	s.mutex.RUnlock()
+
+	return count
 }
