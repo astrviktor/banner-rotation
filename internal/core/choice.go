@@ -33,7 +33,7 @@ func GetBanner(s *memorystorage.Storage, idSlot, idSegment string) (string, erro
 		}
 
 		if clickCount > showCount {
-			return "", ErrClicksMoreThenShows
+			return "", ErrBannerClicksMoreThenShows
 		}
 
 		shows[idBanner] = showCount

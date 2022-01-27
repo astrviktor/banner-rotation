@@ -2,4 +2,5 @@ package core
 
 import "errors"
 
-var ErrClicksMoreThenShows = errors.New("количество кликов больше чем количество показов")
+var ErrBannerClicksMoreThenShows = errors.New("для баннера количество кликов больше чем количество показов")
+var ErrSlotTooFewBanners = errors.New("для слота недостаточное количество баннеров в ротации")
