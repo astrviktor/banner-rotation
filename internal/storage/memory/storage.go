@@ -18,6 +18,8 @@ type Storage struct {
 	mutex *sync.RWMutex
 }
 
+var GlobalStorage *Storage
+
 func New() *Storage {
 	mutex := sync.RWMutex{}
 
@@ -25,8 +27,8 @@ func New() *Storage {
 		slots:     make(map[string]storage.Slot),
 		banners:   make(map[string]storage.Banner),
 		segments:  make(map[string]storage.Segment),
-		rotations: nil,
-		events:    nil,
+		rotations: make([]storage.Rotation, 0),
+		events:    make([]storage.Event, 0),
 		mutex:     &mutex,
 	}
 }
@@ -46,6 +48,13 @@ func (s *Storage) CreateSlot(slot storage.Slot) error {
 	return nil
 }
 
+func (s *Storage) GetSlot(idSlot string) (storage.Slot, bool, error) {
+	s.mutex.RLock()
+	value, ok := s.slots[idSlot]
+	s.mutex.RUnlock()
+	return value, ok, nil
+}
+
 func (s *Storage) CreateBanner(banner storage.Banner) error {
 	s.mutex.Lock()
 	s.banners[banner.ID] = banner
@@ -53,11 +62,25 @@ func (s *Storage) CreateBanner(banner storage.Banner) error {
 	return nil
 }
 
+func (s *Storage) GetBanner(idBanner string) (storage.Banner, bool, error) {
+	s.mutex.RLock()
+	value, ok := s.banners[idBanner]
+	s.mutex.RUnlock()
+	return value, ok, nil
+}
+
 func (s *Storage) CreateSegment(segment storage.Segment) error {
 	s.mutex.Lock()
 	s.segments[segment.ID] = segment
 	s.mutex.Unlock()
 	return nil
+}
+
+func (s *Storage) GetSegment(idSegment string) (storage.Segment, bool, error) {
+	s.mutex.RLock()
+	value, ok := s.segments[idSegment]
+	s.mutex.RUnlock()
+	return value, ok, nil
 }
 
 func (s *Storage) CreateRotation(rotation storage.Rotation) error {
@@ -77,6 +100,13 @@ func (s *Storage) DeleteRotation(rotation storage.Rotation) error {
 	}
 	s.mutex.Unlock()
 	return nil
+}
+
+func (s *Storage) GetRotation() ([]storage.Rotation, error) {
+	s.mutex.RLock()
+	result := s.rotations
+	s.mutex.RUnlock()
+	return result, nil
 }
 
 func (s *Storage) AddEvent(idSlot, idBanner, idSegment string, action storage.ActionType) error {

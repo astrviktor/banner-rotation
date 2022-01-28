@@ -1,4 +1,4 @@
-package internalhttp
+package http
 
 import (
 	"context"
@@ -10,13 +10,23 @@ import (
 	"time"
 )
 
+// POST     /banner                                : Добавляет баннер (из body)
+// GET      /banner/{IDBanner}                     : Возвращает баннер по IDBanner
+
+// POST     /slot                                  : Добавляет слот (из body)
+// GET      /slot/{IDSlot}                         : Возвращает слот по IDSlot
+
+// POST     /segment                               : Добавляет сегмент (из body)
+// GET      /segment/{IDSegment}                   : Возвращает сегмент по IDSegment
+
 // POST     /rotation/{IDSlot}/{IDBanner}          : Добавляет баннер в ротацию в данном слоте.
 // DELETE   /rotation/{IDSlot}/{IDBanner}          : Удаляет баннер в ротацию в данном слоте.
+// GET      /rotations                             : Возвращает все ротации
 
 // POST     /click/{IDSlot}/{IDBanner}/{IDSegment} : Засчитать переход
 // Увеличивает счетчик переходов на 1 для указанного баннера в данном слоте в указанной группе.
 
-// GET      /choice/{IDSlot}/{IDSegment}           : Возвращает ID баннера который следует показать в данный момент
+// POST     /choice/{IDSlot}/{IDSegment}          : Возвращает ID баннера который следует показать в данный момент
 // в указанном слоте для указанной соц-дем. группы. Увеличивает число показов баннера в группе.
 
 type Server struct {
@@ -33,6 +43,22 @@ func (s *Server) Start() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/status", Logging(handleStatus))
+
+	mux.HandleFunc("/banner", Logging(handleCreateBanner))
+	mux.HandleFunc("/banner/", Logging(handleGetBanner))
+
+	mux.HandleFunc("/slot", Logging(handleCreateSlot))
+	mux.HandleFunc("/slot/", Logging(handleGetSlot))
+
+	mux.HandleFunc("/segment", Logging(handleCreateSegment))
+	mux.HandleFunc("/segment/", Logging(handleGetSegment))
+
+	mux.HandleFunc("/rotation/", Logging(handleRotation))
+	mux.HandleFunc("/rotations", Logging(handleGetRotations))
+
+	mux.HandleFunc("/click/", Logging(handleClick))
+
+	mux.HandleFunc("/choice/", Logging(handleChoice))
 
 	s.srv = &http.Server{
 		Addr:    s.addr,

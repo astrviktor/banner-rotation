@@ -7,6 +7,7 @@ import (
 
 	"github.com/astrviktor/banner-rotation/internal/config"
 	internalhttp "github.com/astrviktor/banner-rotation/internal/server/http"
+	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
 )
 
 func main() {
@@ -16,6 +17,7 @@ func main() {
 	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
 
 	httpServer := internalhttp.NewServer(config.GlobalConfig.HTTPServer.Host, config.GlobalConfig.HTTPServer.Port)
+	memorystorage.GlobalStorage = memorystorage.New()
 
 	httpServer.Start()
 
