@@ -28,3 +28,9 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint --config .golangci.yml run ./...
 
+docker.start:
+	docker-compose -f deployments/docker-compose.yml up -d --remove-orphans banner-rotation;
+
+docker.stop:
+	docker-compose -f deployments/docker-compose.yml down;
+
