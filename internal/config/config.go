@@ -17,8 +17,6 @@ type HTTPServerConfig struct {
 	Port string `yaml:"port"`
 }
 
-var GlobalConfig Config
-
 func NewConfig(file string) Config {
 	var config Config
 

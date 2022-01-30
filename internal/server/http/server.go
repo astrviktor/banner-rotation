@@ -1,4 +1,4 @@
-package http
+package internalhttp
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
 )
 
 // POST     /banner                                : Добавляет баннер (из body)
@@ -30,35 +32,41 @@ import (
 // в указанном слоте для указанной соц-дем. группы. Увеличивает число показов баннера в группе.
 
 type Server struct {
-	addr string
-	wg   *sync.WaitGroup
-	srv  *http.Server
+	addr    string
+	wg      *sync.WaitGroup
+	srv     *http.Server
+	storage *memorystorage.Storage
 }
 
-func NewServer(host string, port string) *Server {
-	return &Server{net.JoinHostPort(host, port), &sync.WaitGroup{}, &http.Server{}}
+func NewServer(host string, port string, storage *memorystorage.Storage) *Server {
+	return &Server{
+		net.JoinHostPort(host, port),
+		&sync.WaitGroup{},
+		&http.Server{},
+		storage,
+	}
 }
 
 func (s *Server) Start() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/status", Logging(handleStatus))
+	mux.HandleFunc("/status", Logging(s.handleStatus))
 
-	mux.HandleFunc("/banner", Logging(handleCreateBanner))
-	mux.HandleFunc("/banner/", Logging(handleGetBanner))
+	mux.HandleFunc("/banner", Logging(s.handleCreateBanner))
+	mux.HandleFunc("/banner/", Logging(s.handleGetBanner))
 
-	mux.HandleFunc("/slot", Logging(handleCreateSlot))
-	mux.HandleFunc("/slot/", Logging(handleGetSlot))
+	mux.HandleFunc("/slot", Logging(s.handleCreateSlot))
+	mux.HandleFunc("/slot/", Logging(s.handleGetSlot))
 
-	mux.HandleFunc("/segment", Logging(handleCreateSegment))
-	mux.HandleFunc("/segment/", Logging(handleGetSegment))
+	mux.HandleFunc("/segment", Logging(s.handleCreateSegment))
+	mux.HandleFunc("/segment/", Logging(s.handleGetSegment))
 
-	mux.HandleFunc("/rotation/", Logging(handleRotation))
-	mux.HandleFunc("/rotations", Logging(handleGetRotations))
+	mux.HandleFunc("/rotation/", Logging(s.handleRotation))
+	mux.HandleFunc("/rotations", Logging(s.handleGetRotations))
 
-	mux.HandleFunc("/click/", Logging(handleClick))
+	mux.HandleFunc("/click/", Logging(s.handleClick))
 
-	mux.HandleFunc("/choice/", Logging(handleChoice))
+	mux.HandleFunc("/choice/", Logging(s.handleChoice))
 
 	s.srv = &http.Server{
 		Addr:    s.addr,

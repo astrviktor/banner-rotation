@@ -1,4 +1,4 @@
-package http
+package internalhttp
 
 import (
 	"encoding/json"
@@ -11,13 +11,7 @@ import (
 
 	"github.com/astrviktor/banner-rotation/internal/core"
 	"github.com/astrviktor/banner-rotation/internal/storage"
-	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
 )
-
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	_, _ = io.WriteString(w, "OK\n")
-}
 
 type ResponseError struct {
 	Error string `json:"error"`
@@ -47,16 +41,21 @@ func WriteResponse(w http.ResponseWriter, resp interface{}) {
 
 // handlers
 
-func handleCreateBanner(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.WriteString(w, "OK\n")
+}
+
+func (s *Server) handleCreateBanner(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		CreateBanner(w, r)
+		s.CreateBanner(w, r)
 		return
 	}
 }
 
-func handleGetBanner(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetBanner(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		GetBanner(w, r)
+		s.GetBanner(w, r)
 	}
 }
 
@@ -66,7 +65,7 @@ curl --request POST 'http://127.0.0.1:8888/banner' \
 --data-raw '{"id": "0d59d804-bfe9-427f-ab37-cac59a0fbcd3", "description": "123"}'
 */
 
-func CreateBanner(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreateBanner(w http.ResponseWriter, r *http.Request) {
 	buf := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -82,7 +81,7 @@ func CreateBanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = memorystorage.GlobalStorage.CreateBanner(banner)
+	err = s.storage.CreateBanner(banner)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -95,7 +94,7 @@ func CreateBanner(w http.ResponseWriter, r *http.Request) {
 
 // curl --request GET 'http://127.0.0.1:8888/banner/0d59d804-bfe9-427f-ab37-cac59a0fbcd3'
 
-func GetBanner(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetBanner(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	params := strings.Split(path, "/")
 	if len(params) != 3 {
@@ -106,7 +105,7 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 
 	IDBanner := params[2]
 
-	banner, ok, err := memorystorage.GlobalStorage.GetBanner(IDBanner)
+	banner, ok, err := s.storage.GetBanner(IDBanner)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при получении баннера %s", err)})
@@ -123,16 +122,16 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 	WriteResponse(w, &banner)
 }
 
-func handleCreateSlot(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleCreateSlot(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		CreateSlot(w, r)
+		s.CreateSlot(w, r)
 		return
 	}
 }
 
-func handleGetSlot(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetSlot(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		GetSlot(w, r)
+		s.GetSlot(w, r)
 	}
 }
 
@@ -142,7 +141,7 @@ curl --request POST 'http://127.0.0.1:8888/slot' \
 --data-raw '{"id": "0d59d804-bfe9-427f-ab37-cac59a0fbcd3", "description": "123 456"}'
 */
 
-func CreateSlot(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreateSlot(w http.ResponseWriter, r *http.Request) {
 	buf := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -159,7 +158,7 @@ func CreateSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = memorystorage.GlobalStorage.CreateSlot(slot); err != nil {
+	if err = s.storage.CreateSlot(slot); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при создании слота %s", err)})
 		return
@@ -169,7 +168,7 @@ func CreateSlot(w http.ResponseWriter, r *http.Request) {
 
 // curl --request GET 'http://127.0.0.1:8888/slot/0d59d804-bfe9-427f-ab37-cac59a0fbcd3'
 
-func GetSlot(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetSlot(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	params := strings.Split(path, "/")
 	if len(params) != 3 {
@@ -180,7 +179,7 @@ func GetSlot(w http.ResponseWriter, r *http.Request) {
 
 	IDSlot := params[2]
 
-	slot, ok, err := memorystorage.GlobalStorage.GetSlot(IDSlot)
+	slot, ok, err := s.storage.GetSlot(IDSlot)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при получении слота %s", err)})
@@ -197,16 +196,16 @@ func GetSlot(w http.ResponseWriter, r *http.Request) {
 	WriteResponse(w, &slot)
 }
 
-func handleCreateSegment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleCreateSegment(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		CreateSegment(w, r)
+		s.CreateSegment(w, r)
 		return
 	}
 }
 
-func handleGetSegment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetSegment(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		GetSegment(w, r)
+		s.GetSegment(w, r)
 	}
 }
 
@@ -216,7 +215,7 @@ curl --request POST 'http://127.0.0.1:8888/segment' \
 --data-raw '{"id": "0d59d804-bfe9-427f-ab37-cac59a0fbcd3", "description": "123 456"}'
 */
 
-func CreateSegment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreateSegment(w http.ResponseWriter, r *http.Request) {
 	buf := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -232,7 +231,7 @@ func CreateSegment(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при конвертации данных из запроса %s", err)})
 		return
 	}
-	err = memorystorage.GlobalStorage.CreateSegment(segment)
+	err = s.storage.CreateSegment(segment)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при создании сегмента %s", err)})
@@ -243,7 +242,7 @@ func CreateSegment(w http.ResponseWriter, r *http.Request) {
 
 // curl --request GET 'http://127.0.0.1:8888/segment/0d59d804-bfe9-427f-ab37-cac59a0fbcd3'
 
-func GetSegment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetSegment(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	params := strings.Split(path, "/")
 	if len(params) != 3 {
@@ -254,7 +253,7 @@ func GetSegment(w http.ResponseWriter, r *http.Request) {
 
 	IDSegment := params[2]
 
-	segment, ok, err := memorystorage.GlobalStorage.GetSegment(IDSegment)
+	segment, ok, err := s.storage.GetSegment(IDSegment)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при получении сегмента %s", err)})
@@ -271,40 +270,40 @@ func GetSegment(w http.ResponseWriter, r *http.Request) {
 	WriteResponse(w, &segment)
 }
 
-func handleRotation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleRotation(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		CreateRotation(w, r)
+		s.CreateRotation(w, r)
 		return
 	}
 
 	if r.Method == http.MethodDelete {
-		DeleteRotation(w, r)
+		s.DeleteRotation(w, r)
 		return
 	}
 }
 
-func handleGetRotations(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGetRotations(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		GetRotations(w, r)
+		s.GetRotations(w, r)
 	}
 }
 
-func handleClick(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleClick(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		Click(w, r)
+		s.Click(w, r)
 	}
 }
 
-func handleChoice(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleChoice(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		Choice(w, r)
+		s.Choice(w, r)
 	}
 }
 
 // curl --request GET 'http://127.0.0.1:8888/rotations'
 
-func GetRotations(w http.ResponseWriter, r *http.Request) {
-	rotations, err := memorystorage.GlobalStorage.GetRotation()
+func (s *Server) GetRotations(w http.ResponseWriter, r *http.Request) {
+	rotations, err := s.storage.GetRotation()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при получении ротаций %s", err)})
@@ -317,7 +316,7 @@ func GetRotations(w http.ResponseWriter, r *http.Request) {
 
 // curl --request POST 'http://127.0.0.1:8888/rotation/1/2'
 
-func CreateRotation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreateRotation(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	params := strings.Split(path, "/")
 	if len(params) != 4 {
@@ -331,7 +330,7 @@ func CreateRotation(w http.ResponseWriter, r *http.Request) {
 		IDBanner: params[3],
 	}
 
-	err := memorystorage.GlobalStorage.CreateRotation(rotation)
+	err := s.storage.CreateRotation(rotation)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при создании ротации %s", err)})
@@ -343,7 +342,7 @@ func CreateRotation(w http.ResponseWriter, r *http.Request) {
 
 // curl --request DELETE 'http://127.0.0.1:8888/rotation/1/2'
 
-func DeleteRotation(w http.ResponseWriter, r *http.Request) {
+func (s *Server) DeleteRotation(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	params := strings.Split(path, "/")
 	if len(params) != 4 {
@@ -357,7 +356,7 @@ func DeleteRotation(w http.ResponseWriter, r *http.Request) {
 		IDBanner: params[3],
 	}
 
-	err := memorystorage.GlobalStorage.DeleteRotation(rotation)
+	err := s.storage.DeleteRotation(rotation)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при удалении ротации %s", err)})
@@ -369,7 +368,7 @@ func DeleteRotation(w http.ResponseWriter, r *http.Request) {
 
 // curl --request POST 'http://127.0.0.1:8888/click/1/2/3'
 
-func Click(w http.ResponseWriter, r *http.Request) {
+func (s *Server) Click(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	params := strings.Split(path, "/")
 	if len(params) != 5 {
@@ -382,7 +381,7 @@ func Click(w http.ResponseWriter, r *http.Request) {
 	idBanner := params[3]
 	idSegment := params[4]
 
-	err := memorystorage.GlobalStorage.AddEvent(idSlot, idBanner, idSegment, storage.Click)
+	err := s.storage.AddEvent(idSlot, idBanner, idSegment, storage.Click)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при добавлении клика: %s", err)})
@@ -394,7 +393,7 @@ func Click(w http.ResponseWriter, r *http.Request) {
 
 // curl --request POST 'http://127.0.0.1:8888/choice/1/2/3'
 
-func Choice(w http.ResponseWriter, r *http.Request) {
+func (s *Server) Choice(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	params := strings.Split(path, "/")
 	if len(params) != 4 {
@@ -406,14 +405,14 @@ func Choice(w http.ResponseWriter, r *http.Request) {
 	idSlot := params[2]
 	idSegment := params[3]
 
-	idBanner, err := core.GetBanner(memorystorage.GlobalStorage, idSlot, idSegment)
+	idBanner, err := core.GetBanner(s.storage, idSlot, idSegment)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при выборе баннера для показа %s", err)})
 		return
 	}
 
-	err = memorystorage.GlobalStorage.AddEvent(idSlot, idBanner, idSegment, storage.Show)
+	err = s.storage.AddEvent(idSlot, idBanner, idSegment, storage.Show)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при добавлении показа: %s", err)})

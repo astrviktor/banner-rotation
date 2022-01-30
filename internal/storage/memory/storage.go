@@ -18,8 +18,6 @@ type Storage struct {
 	mutex *sync.RWMutex
 }
 
-var GlobalStorage *Storage
-
 func New() *Storage {
 	mutex := sync.RWMutex{}
 
