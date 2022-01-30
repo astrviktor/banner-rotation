@@ -5,23 +5,21 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/astrviktor/banner-rotation/internal/app"
 	"github.com/astrviktor/banner-rotation/internal/config"
-	internalhttp "github.com/astrviktor/banner-rotation/internal/server/http"
-	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
 )
 
 func main() {
-	config.GlobalConfig = config.DefaultConfig()
+	config := config.DefaultConfig()
+
+	app := app.New(config)
 
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
 
-	httpServer := internalhttp.NewServer(config.GlobalConfig.HTTPServer.Host, config.GlobalConfig.HTTPServer.Port)
-	memorystorage.GlobalStorage = memorystorage.New()
-
-	httpServer.Start()
+	app.Start()
 
 	<-exit
 
-	httpServer.Stop()
+	app.Stop()
 }

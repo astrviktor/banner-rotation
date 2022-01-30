@@ -42,8 +42,8 @@ type Event struct {
 type ActionType int
 
 const (
-	Click ActionType = 1
-	Show  ActionType = 2
+	Show  ActionType = 1
+	Click ActionType = 2
 )
 
 func NewID() string {
