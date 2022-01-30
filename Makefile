@@ -1,3 +1,24 @@
+BIN := "./bin/banner-rotation"
+DOCKER_IMG="banner-rotation:develop"
+
+GIT_HASH := $(shell git log --format="%h" -n 1)
+LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
+
+build:
+	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" "./cmd/main.go"
+
+run: build
+	$(BIN) -config ./configs/config.yaml
+
+build-img:
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG) \
+		-f docker/Dockerfile .
+
+run-img: build-img
+	docker run -p 8888:8888 $(DOCKER_IMG)
+
 test:
 	go test -count=100 -race -timeout=5m ./...
 
@@ -6,3 +27,4 @@ install-lint-deps:
 
 lint: install-lint-deps
 	golangci-lint --config .golangci.yml run ./...
+
