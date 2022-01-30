@@ -28,8 +28,11 @@ import (
 // POST     /click/{IDSlot}/{IDBanner}/{IDSegment} : Засчитать переход
 // Увеличивает счетчик переходов на 1 для указанного баннера в данном слоте в указанной группе.
 
-// POST     /choice/{IDSlot}/{IDSegment}          : Возвращает ID баннера который следует показать в данный момент
+// POST     /choice/{IDSlot}/{IDSegment}           : Возвращает ID баннера который следует показать в данный момент
 // в указанном слоте для указанной соц-дем. группы. Увеличивает число показов баннера в группе.
+
+// GET     /stat/{IDBanner}/{IDSegment}           : Возвращает статистику, сколько по баннеру для сегмента
+// показов и переходов
 
 type Server struct {
 	addr    string
@@ -67,6 +70,8 @@ func (s *Server) Start() {
 	mux.HandleFunc("/click/", Logging(s.handleClick))
 
 	mux.HandleFunc("/choice/", Logging(s.handleChoice))
+
+	mux.HandleFunc("/stat/", Logging(s.handleStat))
 
 	s.srv = &http.Server{
 		Addr:    s.addr,

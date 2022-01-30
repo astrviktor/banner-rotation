@@ -17,14 +17,21 @@ type ResponseError struct {
 	Error string `json:"error"`
 }
 
-type Response struct {
+type ResponseBanner struct {
 	Banner storage.Banner `json:"banner"`
-	Error  string         `json:"error"`
+}
+
+type ResponseBannerID struct {
+	BannerID string `json:"bannerId"`
+}
+
+type ResponseStat struct {
+	Show  int `json:"show"`
+	Click int `json:"click"`
 }
 
 type ResponseRotations struct {
 	Rotations []storage.Rotation `json:"rotations"`
-	Error     string             `json:"error"`
 }
 
 func WriteResponse(w http.ResponseWriter, resp interface{}) {
@@ -43,7 +50,7 @@ func WriteResponse(w http.ResponseWriter, resp interface{}) {
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	_, _ = io.WriteString(w, "OK\n")
+	_, _ = io.WriteString(w, "OK")
 }
 
 func (s *Server) handleCreateBanner(w http.ResponseWriter, r *http.Request) {
@@ -300,6 +307,12 @@ func (s *Server) handleChoice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) handleStat(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		s.Stat(w, r)
+	}
+}
+
 // curl --request GET 'http://127.0.0.1:8888/rotations'
 
 func (s *Server) GetRotations(w http.ResponseWriter, r *http.Request) {
@@ -311,7 +324,7 @@ func (s *Server) GetRotations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	WriteResponse(w, &ResponseRotations{rotations, ""})
+	WriteResponse(w, &ResponseRotations{rotations})
 }
 
 // curl --request POST 'http://127.0.0.1:8888/rotation/1/2'
@@ -391,7 +404,7 @@ func (s *Server) Click(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// curl --request POST 'http://127.0.0.1:8888/choice/1/2/3'
+// curl --request POST 'http://127.0.0.1:8888/choice/1/2'
 
 func (s *Server) Choice(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
@@ -420,4 +433,26 @@ func (s *Server) Choice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	WriteResponse(w, &ResponseBannerID{BannerID: idBanner})
+}
+
+// curl --request GET 'http://127.0.0.1:8888/stat/1/2'
+
+func (s *Server) Stat(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	params := strings.Split(path, "/")
+	if len(params) != 4 {
+		w.WriteHeader(http.StatusBadRequest)
+		WriteResponse(w, &ResponseError{"ошибка в формате запроса"})
+		return
+	}
+
+	idBanner := params[2]
+	idSegment := params[3]
+
+	countShow := s.storage.GetCountActionsForBannerAndSegment(idBanner, idSegment, storage.Show)
+	countClick := s.storage.GetCountActionsForBannerAndSegment(idBanner, idSegment, storage.Click)
+
+	w.WriteHeader(http.StatusOK)
+	WriteResponse(w, &ResponseStat{Show: countShow, Click: countClick})
 }
