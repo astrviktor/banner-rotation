@@ -4,14 +4,13 @@ import (
 	"math"
 
 	"github.com/astrviktor/banner-rotation/internal/storage"
-	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
 )
 
-func GetBanner(s *memorystorage.Storage, idSlot, idSegment string) (string, error) {
-	// 1. получить список баннеров в ротации с IdSlot
-	idBanners, err := s.GetBannersForRotations(idSlot)
+func GetBanner(s storage.Storage, slotID, segmentID string) (string, error) {
+	// 1. получить список баннеров в ротации с slotID
+	bannersID, err := s.GetBannersForSlot(slotID)
 	if err != nil {
-		return "", err
+		return storage.EmptyID, err
 	}
 
 	// 2. для каждого баннера посчитать количество показов для сегмента (независимо от слотов)
@@ -21,45 +20,43 @@ func GetBanner(s *memorystorage.Storage, idSlot, idSegment string) (string, erro
 
 	// 4. посчитать количество показов всех баннеров в слоте для сегмента (сумма из п.2)
 
-	shows := make(map[string]int)
-	clicks := make(map[string]int)
-	showsSum := 0
-	for _, idBanner := range idBanners {
-		showCount := s.GetCountActionsForBannerAndSegment(idBanner, idSegment, storage.Show)
-		clickCount := s.GetCountActionsForBannerAndSegment(idBanner, idSegment, storage.Click)
-
-		if showCount == 0 {
-			return idBanner, nil
+	stats := make(map[string]storage.Stat)
+	showsAmount := 0
+	for _, bannerID := range bannersID {
+		stat, err := s.GetStatForBannerAndSegment(bannerID, segmentID)
+		if err != nil {
+			return storage.EmptyID, ErrGetStat
 		}
 
-		if clickCount > showCount {
-			return "", ErrBannerClicksMoreThenShows
+		if stat.ClickCount > stat.ShowCount {
+			return storage.EmptyID, ErrBannerClicksMoreThenShows
 		}
 
-		shows[idBanner] = showCount
-		clicks[idBanner] = clickCount
-		showsSum += showCount
+		if stat.ShowCount == 0 {
+			return bannerID, nil
+		}
+
+		stats[bannerID] = stat
+		showsAmount += stat.ShowCount
 	}
 
 	// 5. weight = xi + sqrt(2 * Ln(n) / ni)
 	// нужно взять баннер с максимальным весом
 
-	ln := math.Log(float64(showsSum)) / math.Log(math.E)
+	var weightMax float64
+	resultID := ""
 
-	var maxWeight float64
-	resultIDBanner := ""
+	ln := math.Log(float64(showsAmount)) / math.Log(math.E)
+	for _, bannerID := range bannersID {
+		stat := stats[bannerID]
 
-	for _, idBanner := range idBanners {
-		showCount := shows[idBanner]
-		clickCount := clicks[idBanner]
+		weight := float64(stat.ClickCount)/float64(stat.ShowCount) + math.Sqrt(2*ln/float64(stat.ShowCount))
 
-		weight := float64(clickCount)/float64(showCount) + math.Sqrt(2*ln/float64(showCount))
-
-		if weight > maxWeight {
-			maxWeight = weight
-			resultIDBanner = idBanner
+		if weight > weightMax {
+			weightMax = weight
+			resultID = bannerID
 		}
 	}
 
-	return resultIDBanner, nil
+	return resultID, nil
 }

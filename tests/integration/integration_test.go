@@ -37,36 +37,34 @@ func (s *BannerRotationSuite) TestTwoBannersAndNoClicks() {
 	err := s.client.GetStatus()
 	s.Require().NoError(err)
 
-	err = s.client.CreateSegment("men", "men")
+	segment, err := s.client.CreateSegment("segment")
 	s.Require().NoError(err)
 
-	err = s.client.CreateSlot("slot", "slot")
+	slot, err := s.client.CreateSlot("slot")
 	s.Require().NoError(err)
 
-	err = s.client.CreateBanner("bannerA", "bannerA")
+	bannerA, err := s.client.CreateBanner("bannerA")
+	s.Require().NoError(err)
+	bannerB, err := s.client.CreateBanner("bannerB")
 	s.Require().NoError(err)
 
-	err = s.client.CreateBanner("bannerB", "bannerB")
+	err = s.client.CreateRotation(slot, bannerA)
 	s.Require().NoError(err)
-
-	err = s.client.CreateRotation("slot", "bannerA")
-	s.Require().NoError(err)
-
-	err = s.client.CreateRotation("slot", "bannerB")
+	err = s.client.CreateRotation(slot, bannerB)
 	s.Require().NoError(err)
 
 	for i := 0; i < 1000; i++ {
-		_, err := s.client.Choice("slot", "men")
+		_, err := s.client.Choice(slot, segment)
 		s.Require().NoError(err)
 	}
 
-	statA, err := s.client.GetStat("bannerA", "men")
+	statBannerA, err := s.client.GetStat(bannerA, segment)
 	s.Require().NoError(err)
-	statB, err := s.client.GetStat("bannerB", "men")
+	statBannerB, err := s.client.GetStat(bannerB, segment)
 	s.Require().NoError(err)
 
-	s.Require().Equal(500, statA.Show)
-	s.Require().Equal(500, statB.Show)
+	s.Require().Equal(500, statBannerA.ShowCount)
+	s.Require().Equal(500, statBannerB.ShowCount)
 }
 
 func (s *BannerRotationSuite) TearDownTest() {

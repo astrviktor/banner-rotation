@@ -9,133 +9,133 @@ import (
 )
 
 func TestGetBanner(t *testing.T) {
-	t.Run("simple test 2 banners and no clicks", func(t *testing.T) {
+	t.Run("test 2 banners and no clicks", func(t *testing.T) {
 		s := memorystorage.New()
-
-		segment := storage.Segment{ID: "men", Description: "men"}
-		err := s.CreateSegment(segment)
+		err := s.Connect()
 		require.NoError(t, err)
 
-		slot := storage.Slot{ID: "slot", Description: "slot"}
-		err = s.CreateSlot(slot)
+		segment, err := s.CreateSegment("men")
 		require.NoError(t, err)
 
-		bannerA := storage.Banner{ID: "bannerA", Description: "bannerA"}
-		err = s.CreateBanner(bannerA)
+		slot, err := s.CreateSlot("slot")
 		require.NoError(t, err)
 
-		bannerB := storage.Banner{ID: "bannerB", Description: "bannerB"}
-		err = s.CreateBanner(bannerB)
+		bannerA, err := s.CreateBanner("bannerA")
+		require.NoError(t, err)
+		bannerB, err := s.CreateBanner("bannerB")
 		require.NoError(t, err)
 
-		err = s.CreateRotation(storage.Rotation{IDSlot: slot.ID, IDBanner: bannerA.ID})
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerA})
 		require.NoError(t, err)
-		err = s.CreateRotation(storage.Rotation{IDSlot: slot.ID, IDBanner: bannerB.ID})
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerB})
 		require.NoError(t, err)
 
 		for i := 0; i < 1000; i++ {
-			IDBanner, err := GetBanner(s, slot.ID, segment.ID)
+			bannerID, err := GetBanner(s, slot, segment)
 			require.NoError(t, err)
 
-			err = s.AddEvent(slot.ID, IDBanner, segment.ID, storage.Show)
+			err = s.CreateEvent(slot, bannerID, segment, storage.Show)
 			require.NoError(t, err)
 		}
 
-		showCountBannerA := s.GetCountActionsForBannerAndSegment(bannerA.ID, segment.ID, storage.Show)
-		showCountBannerB := s.GetCountActionsForBannerAndSegment(bannerB.ID, segment.ID, storage.Show)
+		statBannerA, err := s.GetStatForBannerAndSegment(bannerA, segment)
+		require.NoError(t, err)
+		statBannerB, err := s.GetStatForBannerAndSegment(bannerB, segment)
+		require.NoError(t, err)
 
-		require.Equal(t, 500, showCountBannerA)
-		require.Equal(t, 500, showCountBannerB)
+		require.Equal(t, 500, statBannerA.ShowCount)
+		require.Equal(t, 500, statBannerB.ShowCount)
+		require.Equal(t, 0, statBannerA.ClickCount)
+		require.Equal(t, 0, statBannerB.ClickCount)
+
+		err = s.Close()
+		require.NoError(t, err)
 	})
 
-	t.Run("simple test 3 banners and no clicks", func(t *testing.T) {
+	t.Run("test 3 banners and no clicks", func(t *testing.T) {
 		s := memorystorage.New()
 
-		segment := storage.Segment{ID: "men", Description: "men"}
-		err := s.CreateSegment(segment)
+		segment, err := s.CreateSegment("men")
 		require.NoError(t, err)
 
-		slot := storage.Slot{ID: "slot", Description: "slot"}
-		err = s.CreateSlot(slot)
+		slot, err := s.CreateSlot("slot")
 		require.NoError(t, err)
 
-		bannerA := storage.Banner{ID: "bannerA", Description: "bannerA"}
-		err = s.CreateBanner(bannerA)
+		bannerA, err := s.CreateBanner("bannerA")
+		require.NoError(t, err)
+		bannerB, err := s.CreateBanner("bannerB")
+		require.NoError(t, err)
+		bannerC, err := s.CreateBanner("bannerC")
 		require.NoError(t, err)
 
-		bannerB := storage.Banner{ID: "bannerB", Description: "bannerB"}
-		err = s.CreateBanner(bannerB)
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerA})
 		require.NoError(t, err)
-
-		bannerC := storage.Banner{ID: "bannerC", Description: "bannerC"}
-		err = s.CreateBanner(bannerB)
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerB})
 		require.NoError(t, err)
-
-		err = s.CreateRotation(storage.Rotation{IDSlot: slot.ID, IDBanner: bannerA.ID})
-		require.NoError(t, err)
-		err = s.CreateRotation(storage.Rotation{IDSlot: slot.ID, IDBanner: bannerB.ID})
-		require.NoError(t, err)
-		err = s.CreateRotation(storage.Rotation{IDSlot: slot.ID, IDBanner: bannerC.ID})
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerC})
 		require.NoError(t, err)
 
 		for i := 0; i < 900; i++ {
-			IDBanner, err := GetBanner(s, slot.ID, segment.ID)
+			bannerID, err := GetBanner(s, slot, segment)
 			require.NoError(t, err)
 
-			err = s.AddEvent(slot.ID, IDBanner, segment.ID, storage.Show)
+			err = s.CreateEvent(slot, bannerID, segment, storage.Show)
 			require.NoError(t, err)
 		}
 
-		showCountBannerA := s.GetCountActionsForBannerAndSegment(bannerA.ID, segment.ID, storage.Show)
-		showCountBannerB := s.GetCountActionsForBannerAndSegment(bannerB.ID, segment.ID, storage.Show)
-		showCountBannerC := s.GetCountActionsForBannerAndSegment(bannerC.ID, segment.ID, storage.Show)
+		statBannerA, err := s.GetStatForBannerAndSegment(bannerA, segment)
+		require.NoError(t, err)
+		statBannerB, err := s.GetStatForBannerAndSegment(bannerB, segment)
+		require.NoError(t, err)
+		statBannerC, err := s.GetStatForBannerAndSegment(bannerC, segment)
+		require.NoError(t, err)
 
-		require.Equal(t, 300, showCountBannerA)
-		require.Equal(t, 300, showCountBannerB)
-		require.Equal(t, 300, showCountBannerC)
+		require.Equal(t, 300, statBannerA.ShowCount)
+		require.Equal(t, 300, statBannerB.ShowCount)
+		require.Equal(t, 300, statBannerC.ShowCount)
+		require.Equal(t, 0, statBannerA.ClickCount)
+		require.Equal(t, 0, statBannerB.ClickCount)
+		require.Equal(t, 0, statBannerC.ClickCount)
 	})
 
-	t.Run("simple test 2 banners and clicks on bannerA", func(t *testing.T) {
+	t.Run("test 2 banners and clicks on bannerA", func(t *testing.T) {
 		s := memorystorage.New()
 
-		segment := storage.Segment{ID: "men", Description: "men"}
-		err := s.CreateSegment(segment)
+		segment, err := s.CreateSegment("men")
 		require.NoError(t, err)
 
-		slot := storage.Slot{ID: "slot", Description: "slot"}
-		err = s.CreateSlot(slot)
+		slot, err := s.CreateSlot("slot")
 		require.NoError(t, err)
 
-		bannerA := storage.Banner{ID: "bannerA", Description: "bannerA"}
-		err = s.CreateBanner(bannerA)
+		bannerA, err := s.CreateBanner("bannerA")
+		require.NoError(t, err)
+		bannerB, err := s.CreateBanner("bannerB")
 		require.NoError(t, err)
 
-		bannerB := storage.Banner{ID: "bannerB", Description: "bannerB"}
-		err = s.CreateBanner(bannerB)
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerA})
 		require.NoError(t, err)
-
-		err = s.CreateRotation(storage.Rotation{IDSlot: slot.ID, IDBanner: bannerA.ID})
-		require.NoError(t, err)
-		err = s.CreateRotation(storage.Rotation{IDSlot: slot.ID, IDBanner: bannerB.ID})
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerB})
 		require.NoError(t, err)
 
 		for i := 0; i < 1000; i++ {
-			IDBanner, err := GetBanner(s, slot.ID, segment.ID)
+			bannerID, err := GetBanner(s, slot, segment)
 			require.NoError(t, err)
 
-			err = s.AddEvent(slot.ID, IDBanner, segment.ID, storage.Show)
+			err = s.CreateEvent(slot, bannerID, segment, storage.Show)
 			require.NoError(t, err)
 
-			if IDBanner == bannerA.ID {
-				err = s.AddEvent(slot.ID, IDBanner, segment.ID, storage.Click)
+			if bannerID == bannerA {
+				err = s.CreateEvent(slot, bannerID, segment, storage.Click)
 				require.NoError(t, err)
 			}
 		}
 
-		showCountBannerA := s.GetCountActionsForBannerAndSegment(bannerA.ID, segment.ID, storage.Show)
-		showCountBannerB := s.GetCountActionsForBannerAndSegment(bannerB.ID, segment.ID, storage.Show)
+		statBannerA, err := s.GetStatForBannerAndSegment(bannerA, segment)
+		require.NoError(t, err)
+		statBannerB, err := s.GetStatForBannerAndSegment(bannerB, segment)
+		require.NoError(t, err)
 
-		require.Equal(t, 988, showCountBannerA)
-		require.Equal(t, 12, showCountBannerB)
+		require.Equal(t, 988, statBannerA.ShowCount)
+		require.Equal(t, 12, statBannerB.ShowCount)
 	})
 }

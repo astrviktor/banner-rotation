@@ -9,21 +9,15 @@ import (
 	"sync"
 	"time"
 
-	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
+	"github.com/astrviktor/banner-rotation/internal/storage"
 )
 
-// POST     /banner                                : Добавляет баннер (из body)
-// GET      /banner/{IDBanner}                     : Возвращает баннер по IDBanner
-
-// POST     /slot                                  : Добавляет слот (из body)
-// GET      /slot/{IDSlot}                         : Возвращает слот по IDSlot
-
-// POST     /segment                               : Добавляет сегмент (из body)
-// GET      /segment/{IDSegment}                   : Возвращает сегмент по IDSegment
+// POST     /banner                                : Добавляет баннер (description из body), возвращает ID
+// POST     /slot                                  : Добавляет слот (description из body), возвращает ID
+// POST     /segment                               : Добавляет сегмент (description из body), возвращает ID
 
 // POST     /rotation/{IDSlot}/{IDBanner}          : Добавляет баннер в ротацию в данном слоте.
 // DELETE   /rotation/{IDSlot}/{IDBanner}          : Удаляет баннер в ротацию в данном слоте.
-// GET      /rotations                             : Возвращает все ротации
 
 // POST     /click/{IDSlot}/{IDBanner}/{IDSegment} : Засчитать переход
 // Увеличивает счетчик переходов на 1 для указанного баннера в данном слоте в указанной группе.
@@ -34,14 +28,22 @@ import (
 // GET     /stat/{IDBanner}/{IDSegment}           : Возвращает статистику, сколько по баннеру для сегмента
 // показов и переходов
 
+type ItemType int
+
+const (
+	Banner  ItemType = 1
+	Slot    ItemType = 2
+	Segment ItemType = 3
+)
+
 type Server struct {
 	addr    string
 	wg      *sync.WaitGroup
 	srv     *http.Server
-	storage *memorystorage.Storage
+	storage storage.Storage
 }
 
-func NewServer(host string, port string, storage *memorystorage.Storage) *Server {
+func NewServer(host string, port string, storage storage.Storage) *Server {
 	return &Server{
 		net.JoinHostPort(host, port),
 		&sync.WaitGroup{},
@@ -51,26 +53,19 @@ func NewServer(host string, port string, storage *memorystorage.Storage) *Server
 }
 
 func (s *Server) Start() {
+	if err := s.storage.Connect(); err != nil {
+		log.Fatalf("Storage Connect(): %v", err)
+	}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/status", Logging(s.handleStatus))
-
 	mux.HandleFunc("/banner", Logging(s.handleCreateBanner))
-	mux.HandleFunc("/banner/", Logging(s.handleGetBanner))
-
 	mux.HandleFunc("/slot", Logging(s.handleCreateSlot))
-	mux.HandleFunc("/slot/", Logging(s.handleGetSlot))
-
 	mux.HandleFunc("/segment", Logging(s.handleCreateSegment))
-	mux.HandleFunc("/segment/", Logging(s.handleGetSegment))
-
 	mux.HandleFunc("/rotation/", Logging(s.handleRotation))
-	mux.HandleFunc("/rotations", Logging(s.handleGetRotations))
-
 	mux.HandleFunc("/click/", Logging(s.handleClick))
-
 	mux.HandleFunc("/choice/", Logging(s.handleChoice))
-
 	mux.HandleFunc("/stat/", Logging(s.handleStat))
 
 	s.srv = &http.Server{
@@ -95,8 +90,13 @@ func (s *Server) Start() {
 func (s *Server) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := s.srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Shutdown(): %v", err)
+		log.Fatalf("Server Shutdown(): %v", err)
 	}
+
+	if err := s.storage.Close(); err != nil {
+		log.Fatalf("Storage Close(): %v", err)
+	}
+
 	defer cancel()
 
 	// Wait for ListenAndServe goroutine to close.
