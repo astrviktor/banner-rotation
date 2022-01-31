@@ -12,18 +12,12 @@ import (
 	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
 )
 
-// POST     /banner                                : Добавляет баннер (из body)
-// GET      /banner/{IDBanner}                     : Возвращает баннер по IDBanner
-
-// POST     /slot                                  : Добавляет слот (из body)
-// GET      /slot/{IDSlot}                         : Возвращает слот по IDSlot
-
-// POST     /segment                               : Добавляет сегмент (из body)
-// GET      /segment/{IDSegment}                   : Возвращает сегмент по IDSegment
+// POST     /banner                                : Добавляет баннер (description из body), возвращает ID
+// POST     /slot                                  : Добавляет слот (description из body), возвращает ID
+// POST     /segment                               : Добавляет сегмент (description из body), возвращает ID
 
 // POST     /rotation/{IDSlot}/{IDBanner}          : Добавляет баннер в ротацию в данном слоте.
 // DELETE   /rotation/{IDSlot}/{IDBanner}          : Удаляет баннер в ротацию в данном слоте.
-// GET      /rotations                             : Возвращает все ротации
 
 // POST     /click/{IDSlot}/{IDBanner}/{IDSegment} : Засчитать переход
 // Увеличивает счетчик переходов на 1 для указанного баннера в данном слоте в указанной группе.
@@ -33,6 +27,14 @@ import (
 
 // GET     /stat/{IDBanner}/{IDSegment}           : Возвращает статистику, сколько по баннеру для сегмента
 // показов и переходов
+
+type ItemType int
+
+const (
+	Banner  ItemType = 1
+	Slot    ItemType = 2
+	Segment ItemType = 3
+)
 
 type Server struct {
 	addr    string
@@ -56,21 +58,11 @@ func (s *Server) Start() {
 	mux.HandleFunc("/status", Logging(s.handleStatus))
 
 	mux.HandleFunc("/banner", Logging(s.handleCreateBanner))
-	mux.HandleFunc("/banner/", Logging(s.handleGetBanner))
-
 	mux.HandleFunc("/slot", Logging(s.handleCreateSlot))
-	mux.HandleFunc("/slot/", Logging(s.handleGetSlot))
-
 	mux.HandleFunc("/segment", Logging(s.handleCreateSegment))
-	mux.HandleFunc("/segment/", Logging(s.handleGetSegment))
-
 	mux.HandleFunc("/rotation/", Logging(s.handleRotation))
-	mux.HandleFunc("/rotations", Logging(s.handleGetRotations))
-
 	mux.HandleFunc("/click/", Logging(s.handleClick))
-
 	mux.HandleFunc("/choice/", Logging(s.handleChoice))
-
 	mux.HandleFunc("/stat/", Logging(s.handleStat))
 
 	s.srv = &http.Server{

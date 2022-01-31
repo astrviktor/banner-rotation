@@ -26,16 +26,24 @@ type Segment struct {
 
 // Rotation - баннер в ротации в данном слоте.
 type Rotation struct {
-	IDSlot   string `json:"idSlot"`   // ID слота
-	IDBanner string `json:"idBanner"` // ID баннера
+	SlotID   string `json:"slotId"`   // ID слота
+	BannerID string `json:"bannerId"` // ID баннера
+}
+
+// Stat - агрегированная статистика по переходу и показу баннера.
+type Stat struct {
+	BannerID   string `json:"bannerId"`   // ID баннера
+	SegmentID  string `json:"segmentId"`  // ID сегмента
+	ShowCount  int    `json:"showCount"`  // количество показов
+	ClickCount int    `json:"clickCount"` // количество переходов
 }
 
 // Event - событие по переходу или показу баннера.
 type Event struct {
+	SlotID    string     `json:"slotId"`    // ID слота
+	BannerID  string     `json:"bannerId"`  // ID баннера
+	SegmentID string     `json:"segmentId"` // ID сегмента
 	Action    ActionType `json:"action"`    // Действие: клик или показ
-	IDSlot    string     `json:"idSlot"`    // ID слота
-	IDBanner  string     `json:"idBanner"`  // ID баннера
-	IDSegment string     `json:"idSegment"` // ID сегмента
 	Date      time.Time  `json:"date"`      // Дата и время события
 }
 

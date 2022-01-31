@@ -1,7 +1,6 @@
 package memorystorage
 
 import (
-	"context"
 	"sync"
 	"time"
 
@@ -13,6 +12,7 @@ type Storage struct {
 	banners   map[string]storage.Banner
 	segments  map[string]storage.Segment
 	rotations []storage.Rotation
+	stats     []storage.Stat
 	events    []storage.Event
 
 	mutex *sync.RWMutex
@@ -26,59 +26,63 @@ func New() *Storage {
 		banners:   make(map[string]storage.Banner),
 		segments:  make(map[string]storage.Segment),
 		rotations: make([]storage.Rotation, 0),
+		stats:     make([]storage.Stat, 0),
 		events:    make([]storage.Event, 0),
 		mutex:     &mutex,
 	}
 }
 
-func (s *Storage) Connect(ctx context.Context) error {
+func (s *Storage) Connect() error {
 	return nil
 }
 
-func (s *Storage) Close(ctx context.Context) error {
+func (s *Storage) Close() error {
 	return nil
 }
 
-func (s *Storage) CreateSlot(slot storage.Slot) error {
+func (s *Storage) CreateSlot(description string) (string, error) {
+	id := storage.NewID()
+	slot := storage.Slot{ID: id, Description: description}
 	s.mutex.Lock()
-	s.slots[slot.ID] = slot
+	s.slots[id] = slot
 	s.mutex.Unlock()
-	return nil
+	return id, nil
 }
 
-func (s *Storage) GetSlot(idSlot string) (storage.Slot, bool, error) {
-	s.mutex.RLock()
-	value, ok := s.slots[idSlot]
-	s.mutex.RUnlock()
-	return value, ok, nil
-}
-
-func (s *Storage) CreateBanner(banner storage.Banner) error {
+func (s *Storage) CreateBanner(description string) (string, error) {
+	id := storage.NewID()
+	banner := storage.Banner{ID: id, Description: description}
 	s.mutex.Lock()
-	s.banners[banner.ID] = banner
+	s.banners[id] = banner
+	for _, segment := range s.segments {
+		stat := storage.Stat{
+			BannerID:   id,
+			SegmentID:  segment.ID,
+			ShowCount:  0,
+			ClickCount: 0,
+		}
+		s.stats = append(s.stats, stat)
+	}
 	s.mutex.Unlock()
-	return nil
+	return id, nil
 }
 
-func (s *Storage) GetBanner(idBanner string) (storage.Banner, bool, error) {
-	s.mutex.RLock()
-	value, ok := s.banners[idBanner]
-	s.mutex.RUnlock()
-	return value, ok, nil
-}
-
-func (s *Storage) CreateSegment(segment storage.Segment) error {
+func (s *Storage) CreateSegment(description string) (string, error) {
+	id := storage.NewID()
+	segment := storage.Segment{ID: id, Description: description}
 	s.mutex.Lock()
-	s.segments[segment.ID] = segment
+	s.segments[id] = segment
+	for _, banner := range s.banners {
+		stat := storage.Stat{
+			BannerID:   banner.ID,
+			SegmentID:  id,
+			ShowCount:  0,
+			ClickCount: 0,
+		}
+		s.stats = append(s.stats, stat)
+	}
 	s.mutex.Unlock()
-	return nil
-}
-
-func (s *Storage) GetSegment(idSegment string) (storage.Segment, bool, error) {
-	s.mutex.RLock()
-	value, ok := s.segments[idSegment]
-	s.mutex.RUnlock()
-	return value, ok, nil
+	return id, nil
 }
 
 func (s *Storage) CreateRotation(rotation storage.Rotation) error {
@@ -90,9 +94,9 @@ func (s *Storage) CreateRotation(rotation storage.Rotation) error {
 
 func (s *Storage) DeleteRotation(rotation storage.Rotation) error {
 	s.mutex.Lock()
-	for IDx, r := range s.rotations {
-		if r.IDSlot == rotation.IDSlot && r.IDBanner == rotation.IDBanner {
-			s.rotations = append(s.rotations[:IDx], s.rotations[IDx+1:]...)
+	for idx, elem := range s.rotations {
+		if elem.SlotID == rotation.SlotID && elem.BannerID == rotation.BannerID {
+			s.rotations = append(s.rotations[:idx], s.rotations[idx+1:]...)
 			break
 		}
 	}
@@ -100,52 +104,56 @@ func (s *Storage) DeleteRotation(rotation storage.Rotation) error {
 	return nil
 }
 
-func (s *Storage) GetRotation() ([]storage.Rotation, error) {
-	s.mutex.RLock()
-	result := s.rotations
-	s.mutex.RUnlock()
-	return result, nil
-}
-
-func (s *Storage) AddEvent(idSlot, idBanner, idSegment string, action storage.ActionType) error {
+func (s *Storage) CreateEvent(slotID, bannerID, segmentID string, action storage.ActionType) error {
 	event := storage.Event{
+		SlotID:    slotID,
+		BannerID:  bannerID,
+		SegmentID: segmentID,
 		Action:    action,
-		IDSlot:    idSlot,
-		IDBanner:  idBanner,
-		IDSegment: idSegment,
 		Date:      time.Now().UTC(),
 	}
 
 	s.mutex.Lock()
 	s.events = append(s.events, event)
+
+	for idx, stat := range s.stats {
+		if stat.BannerID == bannerID && stat.SegmentID == segmentID {
+			switch action {
+			case storage.Show:
+				s.stats[idx].ShowCount++
+			case storage.Click:
+				s.stats[idx].ClickCount++
+			}
+			break
+		}
+	}
 	s.mutex.Unlock()
 	return nil
 }
 
-func (s *Storage) GetBannersForRotations(idSlot string) ([]string, error) {
-	var res []string
+func (s *Storage) GetBannersForSlot(slotID string) ([]string, error) {
+	var bannersID []string
 
 	s.mutex.RLock()
 	for _, rotation := range s.rotations {
-		if rotation.IDSlot == idSlot {
-			res = append(res, rotation.IDBanner)
+		if rotation.SlotID == slotID {
+			bannersID = append(bannersID, rotation.BannerID)
 		}
 	}
 	s.mutex.RUnlock()
 
-	return res, nil
+	return bannersID, nil
 }
 
-func (s *Storage) GetCountActionsForBannerAndSegment(idBanner, idSegment string, action storage.ActionType) int {
-	count := 0
-
+func (s *Storage) GetStatForBannerAndSegment(bannerID, segmentID string) storage.Stat {
 	s.mutex.RLock()
-	for _, event := range s.events {
-		if event.IDBanner == idBanner && event.IDSegment == idSegment && event.Action == action {
-			count++
+	for _, stat := range s.stats {
+		if stat.BannerID == bannerID && stat.SegmentID == segmentID {
+			s.mutex.RUnlock()
+			return stat
 		}
 	}
 	s.mutex.RUnlock()
 
-	return count
+	return storage.Stat{}
 }

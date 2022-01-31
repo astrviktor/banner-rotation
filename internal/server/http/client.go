@@ -9,8 +9,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"github.com/astrviktor/banner-rotation/internal/storage"
 )
 
 type Client struct {
@@ -47,88 +45,65 @@ func (c *Client) GetStatus() error {
 	return nil
 }
 
-func (c *Client) CreateBanner(id, description string) error {
-	banner := storage.Banner{ID: id, Description: description}
-	b, err := json.Marshal(banner)
-	if err != nil {
-		return err
-	}
-
-	body := bytes.NewReader(b)
-
-	req, err := http.NewRequestWithContext(context.Background(), "POST", "http://"+c.addr+"/banner", body)
-	if err != nil {
-		return err
-	}
-
-	client := &http.Client{Timeout: c.timeout}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("ошибка при добавлении баннера")
-	}
-	return nil
+func (c *Client) CreateBanner(description string) (string, error) {
+	return c.CreateItem(Banner, description)
 }
 
-func (c *Client) CreateSlot(id, description string) error {
-	slot := storage.Slot{ID: id, Description: description}
-	b, err := json.Marshal(slot)
-	if err != nil {
-		return err
-	}
-
-	body := bytes.NewReader(b)
-
-	req, err := http.NewRequestWithContext(context.Background(), "POST", "http://"+c.addr+"/slot", body)
-	if err != nil {
-		return err
-	}
-
-	client := &http.Client{Timeout: c.timeout}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("ошибка при добавлении слота")
-	}
-	return nil
+func (c *Client) CreateSlot(description string) (string, error) {
+	return c.CreateItem(Slot, description)
 }
 
-func (c *Client) CreateSegment(id, description string) error {
-	segment := storage.Segment{ID: id, Description: description}
-	b, err := json.Marshal(segment)
+func (c *Client) CreateSegment(description string) (string, error) {
+	return c.CreateItem(Segment, description)
+}
+
+func (c *Client) CreateItem(item ItemType, description string) (string, error) {
+	desc := Description{Description: description}
+	b, err := json.Marshal(desc)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	body := bytes.NewReader(b)
 
-	req, err := http.NewRequestWithContext(context.Background(), "POST", "http://"+c.addr+"/segment", body)
+	var url string
+	switch item {
+	case Banner:
+		url = "http://" + c.addr + "/banner"
+	case Slot:
+		url = "http://" + c.addr + "/slot"
+	case Segment:
+		url = "http://" + c.addr + "/segment"
+	}
+
+	req, err := http.NewRequestWithContext(context.Background(), "POST", url, body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	client := &http.Client{Timeout: c.timeout}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("ошибка при добавлении сегмента")
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
 	}
-	return nil
+
+	responseID := ResponseID{}
+	err = json.Unmarshal(responseBody, &responseID)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New("ошибка при создании")
+	}
+	return responseID.ID, nil
 }
 
 func (c *Client) CreateRotation(slotID, bannerID string) error {
@@ -174,8 +149,8 @@ func (c *Client) Choice(slotID, segmentID string) (string, error) {
 		return "", err
 	}
 
-	responseBannerID := ResponseBannerID{}
-	err = json.Unmarshal(body, &responseBannerID)
+	responseID := ResponseID{}
+	err = json.Unmarshal(body, &responseID)
 	if err != nil {
 		return "", err
 	}
@@ -183,10 +158,8 @@ func (c *Client) Choice(slotID, segmentID string) (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", errors.New("ошибка при получении баннера для показа")
 	}
-	return responseBannerID.BannerID, nil
+	return responseID.ID, nil
 }
-
-// mux.HandleFunc("/click/", Logging(s.handleClick))
 
 func (c *Client) GetStat(bannerID, segmentID string) (ResponseStat, error) {
 	url := "http://" + c.addr + "/stat/" + bannerID + "/" + segmentID
