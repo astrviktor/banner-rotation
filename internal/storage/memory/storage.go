@@ -145,15 +145,15 @@ func (s *Storage) GetBannersForSlot(slotID string) ([]string, error) {
 	return bannersID, nil
 }
 
-func (s *Storage) GetStatForBannerAndSegment(bannerID, segmentID string) storage.Stat {
+func (s *Storage) GetStatForBannerAndSegment(bannerID, segmentID string) (storage.Stat, error) {
 	s.mutex.RLock()
 	for _, stat := range s.stats {
 		if stat.BannerID == bannerID && stat.SegmentID == segmentID {
 			s.mutex.RUnlock()
-			return stat
+			return stat, nil
 		}
 	}
 	s.mutex.RUnlock()
 
-	return storage.Stat{}
+	return storage.Stat{}, nil
 }

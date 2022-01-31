@@ -11,6 +11,8 @@ import (
 func TestGetBanner(t *testing.T) {
 	t.Run("test 2 banners and no clicks", func(t *testing.T) {
 		s := memorystorage.New()
+		err := s.Connect()
+		require.NoError(t, err)
 
 		segment, err := s.CreateSegment("men")
 		require.NoError(t, err)
@@ -36,13 +38,18 @@ func TestGetBanner(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		statBannerA := s.GetStatForBannerAndSegment(bannerA, segment)
-		statBannerB := s.GetStatForBannerAndSegment(bannerB, segment)
+		statBannerA, err := s.GetStatForBannerAndSegment(bannerA, segment)
+		require.NoError(t, err)
+		statBannerB, err := s.GetStatForBannerAndSegment(bannerB, segment)
+		require.NoError(t, err)
 
 		require.Equal(t, 500, statBannerA.ShowCount)
 		require.Equal(t, 500, statBannerB.ShowCount)
 		require.Equal(t, 0, statBannerA.ClickCount)
 		require.Equal(t, 0, statBannerB.ClickCount)
+
+		err = s.Close()
+		require.NoError(t, err)
 	})
 
 	t.Run("test 3 banners and no clicks", func(t *testing.T) {
@@ -76,9 +83,12 @@ func TestGetBanner(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		statBannerA := s.GetStatForBannerAndSegment(bannerA, segment)
-		statBannerB := s.GetStatForBannerAndSegment(bannerB, segment)
-		statBannerC := s.GetStatForBannerAndSegment(bannerC, segment)
+		statBannerA, err := s.GetStatForBannerAndSegment(bannerA, segment)
+		require.NoError(t, err)
+		statBannerB, err := s.GetStatForBannerAndSegment(bannerB, segment)
+		require.NoError(t, err)
+		statBannerC, err := s.GetStatForBannerAndSegment(bannerC, segment)
+		require.NoError(t, err)
 
 		require.Equal(t, 300, statBannerA.ShowCount)
 		require.Equal(t, 300, statBannerB.ShowCount)
@@ -120,8 +130,10 @@ func TestGetBanner(t *testing.T) {
 			}
 		}
 
-		statBannerA := s.GetStatForBannerAndSegment(bannerA, segment)
-		statBannerB := s.GetStatForBannerAndSegment(bannerB, segment)
+		statBannerA, err := s.GetStatForBannerAndSegment(bannerA, segment)
+		require.NoError(t, err)
+		statBannerB, err := s.GetStatForBannerAndSegment(bannerB, segment)
+		require.NoError(t, err)
 
 		require.Equal(t, 988, statBannerA.ShowCount)
 		require.Equal(t, 12, statBannerB.ShowCount)

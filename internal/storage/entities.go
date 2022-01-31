@@ -6,6 +6,19 @@ import (
 	"github.com/google/uuid"
 )
 
+type Storage interface {
+	Connect() error
+	Close() error
+	CreateSlot(description string) (string, error)
+	CreateBanner(description string) (string, error)
+	CreateSegment(description string) (string, error)
+	CreateRotation(rotation Rotation) error
+	DeleteRotation(rotation Rotation) error
+	CreateEvent(slotID, bannerID, segmentID string, action ActionType) error
+	GetBannersForSlot(slotID string) ([]string, error)
+	GetStatForBannerAndSegment(bannerID, segmentID string) (Stat, error)
+}
+
 // Slot - место на сайте, на котором мы показываем баннер.
 type Slot struct {
 	ID          string `json:"id"`          // ID - уникальный идентификатор слота (UUID)
@@ -57,3 +70,5 @@ const (
 func NewID() string {
 	return uuid.New().String()
 }
+
+const EmptyID string = "00000000-0000-0000-0000-000000000000"

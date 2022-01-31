@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
+	"github.com/astrviktor/banner-rotation/internal/storage"
 )
 
 // POST     /banner                                : Добавляет баннер (description из body), возвращает ID
@@ -40,10 +40,10 @@ type Server struct {
 	addr    string
 	wg      *sync.WaitGroup
 	srv     *http.Server
-	storage *memorystorage.Storage
+	storage storage.Storage
 }
 
-func NewServer(host string, port string, storage *memorystorage.Storage) *Server {
+func NewServer(host string, port string, storage storage.Storage) *Server {
 	return &Server{
 		net.JoinHostPort(host, port),
 		&sync.WaitGroup{},
@@ -53,10 +53,13 @@ func NewServer(host string, port string, storage *memorystorage.Storage) *Server
 }
 
 func (s *Server) Start() {
+	if err := s.storage.Connect(); err != nil {
+		log.Fatalf("Storage Connect(): %v", err)
+	}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/status", Logging(s.handleStatus))
-
 	mux.HandleFunc("/banner", Logging(s.handleCreateBanner))
 	mux.HandleFunc("/slot", Logging(s.handleCreateSlot))
 	mux.HandleFunc("/segment", Logging(s.handleCreateSegment))
@@ -87,8 +90,13 @@ func (s *Server) Start() {
 func (s *Server) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := s.srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Shutdown(): %v", err)
+		log.Fatalf("Server Shutdown(): %v", err)
 	}
+
+	if err := s.storage.Close(); err != nil {
+		log.Fatalf("Storage Close(): %v", err)
+	}
+
 	defer cancel()
 
 	// Wait for ListenAndServe goroutine to close.

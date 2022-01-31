@@ -281,7 +281,12 @@ func (s *Server) Stat(w http.ResponseWriter, r *http.Request) {
 	bannerID := params[2]
 	segmentID := params[3]
 
-	stat := s.storage.GetStatForBannerAndSegment(bannerID, segmentID)
+	stat, err := s.storage.GetStatForBannerAndSegment(bannerID, segmentID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		WriteResponse(w, &ResponseError{"ошибка и получении статистики"})
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	WriteResponse(w, &ResponseStat{ShowCount: stat.ShowCount, ClickCount: stat.ClickCount})

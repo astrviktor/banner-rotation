@@ -4,3 +4,16 @@ services:
     image: banner-rotation:develop
     ports:
       - "8888:8888"
+
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: "banner_rotation"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "password"
+      TZ: 'UTC'
+      PGTZ: 'UTC'
+    volumes:
+      - ../migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"

@@ -4,14 +4,13 @@ import (
 	"math"
 
 	"github.com/astrviktor/banner-rotation/internal/storage"
-	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
 )
 
-func GetBanner(s *memorystorage.Storage, slotID, segmentID string) (string, error) {
+func GetBanner(s storage.Storage, slotID, segmentID string) (string, error) {
 	// 1. получить список баннеров в ротации с slotID
 	bannersID, err := s.GetBannersForSlot(slotID)
 	if err != nil {
-		return "", err
+		return storage.EmptyID, err
 	}
 
 	// 2. для каждого баннера посчитать количество показов для сегмента (независимо от слотов)
@@ -24,10 +23,13 @@ func GetBanner(s *memorystorage.Storage, slotID, segmentID string) (string, erro
 	stats := make(map[string]storage.Stat)
 	showsAmount := 0
 	for _, bannerID := range bannersID {
-		stat := s.GetStatForBannerAndSegment(bannerID, segmentID)
+		stat, err := s.GetStatForBannerAndSegment(bannerID, segmentID)
+		if err != nil {
+			return storage.EmptyID, ErrGetStat
+		}
 
 		if stat.ClickCount > stat.ShowCount {
-			return "", ErrBannerClicksMoreThenShows
+			return storage.EmptyID, ErrBannerClicksMoreThenShows
 		}
 
 		if stat.ShowCount == 0 {

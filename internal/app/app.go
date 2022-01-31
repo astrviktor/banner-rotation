@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/astrviktor/banner-rotation/internal/config"
 	internalhttp "github.com/astrviktor/banner-rotation/internal/server/http"
-	memorystorage "github.com/astrviktor/banner-rotation/internal/storage/memory"
+	sqlstorage "github.com/astrviktor/banner-rotation/internal/storage/sql"
 )
 
 type App struct {
@@ -12,7 +12,7 @@ type App struct {
 }
 
 func New(config config.Config) *App {
-	storage := memorystorage.New()
+	storage := sqlstorage.New("postgres://user:password@postgres:5432/banner_rotation")
 	server := internalhttp.NewServer(config.HTTPServer.Host, config.HTTPServer.Port, storage)
 	return &App{config, server}
 }
