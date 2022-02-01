@@ -28,13 +28,14 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint --config .golangci.yml run ./...
 
-docker.start:
-	docker-compose -f deployments/docker-compose.yml up -d;
+compose_up:
+	docker-compose -f deployments/docker-compose.yml up --remove-orphans -d
 
-docker.stop:
-	docker-compose -f deployments/docker-compose.yml down;
-
-test.integration:
+test_integration:
 	go test -v -tags=integration -count=1 ./tests/integration/...
+
+compose_down:
+	docker-compose -f deployments/docker-compose.yml down
+
 
 
