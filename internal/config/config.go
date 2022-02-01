@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -35,13 +34,13 @@ func NewConfig(name string) Config {
 
 	file, err := os.ReadFile(name)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return DefaultConfig()
 	}
 
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return DefaultConfig()
 	}
 
