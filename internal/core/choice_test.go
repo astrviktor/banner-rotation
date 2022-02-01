@@ -48,8 +48,7 @@ func TestGetBanner(t *testing.T) {
 		require.Equal(t, 0, statBannerA.ClickCount)
 		require.Equal(t, 0, statBannerB.ClickCount)
 
-		err = s.Close()
-		require.NoError(t, err)
+		s.Close()
 	})
 
 	t.Run("test 3 banners and no clicks", func(t *testing.T) {

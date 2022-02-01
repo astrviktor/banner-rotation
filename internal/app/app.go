@@ -12,7 +12,7 @@ type App struct {
 }
 
 func New(config config.Config) *App {
-	storage := sqlstorage.New("postgres://user:password@postgres:5432/banner_rotation")
+	storage := sqlstorage.New(config)
 	server := internalhttp.NewServer(config.HTTPServer.Host, config.HTTPServer.Port, storage)
 	return &App{config, server}
 }

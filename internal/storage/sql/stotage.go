@@ -1,22 +1,39 @@
 package sqlstorage
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
 
+	"github.com/astrviktor/banner-rotation/internal/config"
 	"github.com/astrviktor/banner-rotation/internal/storage"
 	_ "github.com/jackc/pgx/stdlib" //nolint
+	"github.com/segmentio/kafka-go"
 )
 
 type Storage struct {
-	dsn string
-	db  *sql.DB
+	dsn                     string
+	dbMaxConnectAttempts    int
+	db                      *sql.DB
+	kafkaTopic              string
+	kafkaBrokerAddress      string
+	kafkaMaxConnectAttempts int
+	kafka                   *kafka.Conn
 }
 
-func New(dsn string) *Storage {
-	return &Storage{dsn, nil}
+func New(config config.Config) *Storage {
+	return &Storage{
+		dsn:                     config.DB.DSN,
+		dbMaxConnectAttempts:    config.DB.MaxConnectAttempts,
+		db:                      nil,
+		kafkaTopic:              config.Kafka.Topic,
+		kafkaBrokerAddress:      config.Kafka.BrokerAddress,
+		kafkaMaxConnectAttempts: config.Kafka.MaxConnectAttempts,
+		kafka:                   nil,
+	}
 }
 
 func (s *Storage) Connect() error {
@@ -25,12 +42,28 @@ func (s *Storage) Connect() error {
 		return err
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < s.dbMaxConnectAttempts; i++ {
+		log.Println("trying to connect to db...")
 		err = db.Ping()
 		if err == nil {
 			break
 		}
-		log.Println("Попытка соединения к storage...")
+		time.Sleep(5 * time.Second)
+	}
+
+	if err != nil {
+		return err
+	}
+	log.Println("connect to db OK")
+	s.db = db
+
+	var conn *kafka.Conn
+	for i := 0; i < s.kafkaMaxConnectAttempts; i++ {
+		conn, err = kafka.DialLeader(context.Background(), "tcp", s.kafkaBrokerAddress, s.kafkaTopic, 0)
+		if err == nil {
+			break
+		}
+		log.Println("trying to connect to kafka...")
 		time.Sleep(5 * time.Second)
 	}
 
@@ -38,12 +71,19 @@ func (s *Storage) Connect() error {
 		return err
 	}
 
-	s.db = db
+	log.Println("connect to kafka OK")
+	s.kafka = conn
 	return nil
 }
 
-func (s *Storage) Close() error {
-	return s.db.Close()
+func (s *Storage) Close() {
+	if err := s.db.Close(); err != nil {
+		log.Printf("failed to close db: %s", err)
+	}
+
+	if err := s.kafka.Close(); err != nil {
+		log.Printf("failed to close kafka: %s", err)
+	}
 }
 
 func (s *Storage) CreateSlot(description string) (string, error) {
@@ -192,8 +232,6 @@ func (s *Storage) CreateEvent(slotID, bannerID, segmentID string, action storage
 		Date:      time.Now().UTC(),
 	}
 
-	// положить event в kafka
-
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -236,6 +274,22 @@ func (s *Storage) CreateEvent(slotID, bannerID, segmentID string, action storage
 	if err != nil {
 		return err
 	}
+
+	// положить event в kafka
+	bytes, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.kafka.WriteMessages(kafka.Message{
+		Value: bytes,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("write event to kafka")
 
 	return nil
 }

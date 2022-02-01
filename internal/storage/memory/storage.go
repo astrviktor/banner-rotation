@@ -36,8 +36,7 @@ func (s *Storage) Connect() error {
 	return nil
 }
 
-func (s *Storage) Close() error {
-	return nil
+func (s *Storage) Close() {
 }
 
 func (s *Storage) CreateSlot(description string) (string, error) {

@@ -93,9 +93,7 @@ func (s *Server) Stop() {
 		log.Fatalf("Server Shutdown(): %v", err)
 	}
 
-	if err := s.storage.Close(); err != nil {
-		log.Fatalf("Storage Close(): %v", err)
-	}
+	s.storage.Close()
 
 	defer cancel()
 
