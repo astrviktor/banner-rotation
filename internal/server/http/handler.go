@@ -21,10 +21,6 @@ type ResponseError struct {
 	Error string `json:"error"`
 }
 
-type ResponseBanner struct {
-	Banner storage.Banner `json:"banner"`
-}
-
 type ResponseID struct {
 	ID string `json:"id"`
 }
@@ -97,14 +93,14 @@ func (s *Server) CreateItem(item ItemType, w http.ResponseWriter, r *http.Reques
 	_, err := r.Body.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
 		w.WriteHeader(http.StatusInternalServerError)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при получении данных из запроса %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error while getting data from request %s", err)})
 		return
 	}
 
 	description := Description{}
 	if err = json.Unmarshal(buf, &description); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при конвертации данных из запроса %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error while converting data from request %s", err)})
 		return
 	}
 
@@ -120,7 +116,7 @@ func (s *Server) CreateItem(item ItemType, w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при создании %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error while creating %s", err)})
 		return
 	}
 
@@ -165,7 +161,7 @@ func (s *Server) CreateRotation(w http.ResponseWriter, r *http.Request) {
 	params := strings.Split(path, "/")
 	if len(params) != 4 {
 		w.WriteHeader(http.StatusBadRequest)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка в формате запроса %s", path)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("request format error %s", path)})
 		return
 	}
 
@@ -177,7 +173,7 @@ func (s *Server) CreateRotation(w http.ResponseWriter, r *http.Request) {
 	err := s.storage.CreateRotation(rotation)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при создании ротации %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error creating rotation %s", err)})
 		return
 	}
 
@@ -191,7 +187,7 @@ func (s *Server) DeleteRotation(w http.ResponseWriter, r *http.Request) {
 	params := strings.Split(path, "/")
 	if len(params) != 4 {
 		w.WriteHeader(http.StatusBadRequest)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка в формате запроса %s", path)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("request format error %s", path)})
 		return
 	}
 
@@ -203,7 +199,7 @@ func (s *Server) DeleteRotation(w http.ResponseWriter, r *http.Request) {
 	err := s.storage.DeleteRotation(rotation)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при удалении ротации %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error deleting rotation %s", err)})
 		return
 	}
 
@@ -217,7 +213,7 @@ func (s *Server) Click(w http.ResponseWriter, r *http.Request) {
 	params := strings.Split(path, "/")
 	if len(params) != 5 {
 		w.WriteHeader(http.StatusBadRequest)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка в формате запроса %s", path)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("request format error %s", path)})
 		return
 	}
 
@@ -228,7 +224,7 @@ func (s *Server) Click(w http.ResponseWriter, r *http.Request) {
 	err := s.storage.CreateEvent(slotID, bannerID, segmentID, storage.Click)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при добавлении клика: %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error when adding click %s", err)})
 		return
 	}
 
@@ -242,7 +238,7 @@ func (s *Server) Choice(w http.ResponseWriter, r *http.Request) {
 	params := strings.Split(path, "/")
 	if len(params) != 4 {
 		w.WriteHeader(http.StatusBadRequest)
-		WriteResponse(w, &ResponseError{"ошибка в формате запроса"})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("request format error %s", path)})
 		return
 	}
 
@@ -252,14 +248,14 @@ func (s *Server) Choice(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := core.GetBanner(s.storage, slotID, segmentID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при выборе баннера для показа %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error when choosing a banner to display %s", err)})
 		return
 	}
 
 	err = s.storage.CreateEvent(slotID, bannerID, segmentID, storage.Show)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		WriteResponse(w, &ResponseError{fmt.Sprintf("ошибка при добавлении показа: %s", err)})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("error when adding show event: %s", err)})
 		return
 	}
 
@@ -274,7 +270,7 @@ func (s *Server) Stat(w http.ResponseWriter, r *http.Request) {
 	params := strings.Split(path, "/")
 	if len(params) != 4 {
 		w.WriteHeader(http.StatusBadRequest)
-		WriteResponse(w, &ResponseError{"ошибка в формате запроса"})
+		WriteResponse(w, &ResponseError{fmt.Sprintf("request format error %s", path)})
 		return
 	}
 
@@ -284,7 +280,7 @@ func (s *Server) Stat(w http.ResponseWriter, r *http.Request) {
 	stat, err := s.storage.GetStatForBannerAndSegment(bannerID, segmentID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		WriteResponse(w, &ResponseError{"ошибка и получении статистики"})
+		WriteResponse(w, &ResponseError{"error while getting statistics"})
 		return
 	}
 

@@ -10,7 +10,7 @@ https://github.com/OtusGolang/final_project/blob/master/02-banners-rotation.md
 - `make build` - сборка бинарника
 - `make run` - запуск бинарника
 - `make build-img` - сборка проекта в докере
-- `make run-img` - запуск проекта, собранного в докере
+- `make run-img` - сборка проекта в докере и запуск 
 - `make test` - запуск unit-тестов для проекта
 - `make lint` - запуск golangci-lint для проекта
 - `make compose-up` - запуск docker-compose с проектом, postgres, kafka, zookeeper

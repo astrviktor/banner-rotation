@@ -12,21 +12,21 @@ import (
 	"github.com/astrviktor/banner-rotation/internal/storage"
 )
 
-// POST     /banner                                : Добавляет баннер (description из body), возвращает ID
-// POST     /slot                                  : Добавляет слот (description из body), возвращает ID
-// POST     /segment                               : Добавляет сегмент (description из body), возвращает ID
+// GET     /status                                : Проверка статуса сервиса
+// POST    /banner                                : Добавляет баннер (description из body), возвращает ID
+// POST    /slot                                  : Добавляет слот (description из body), возвращает ID
+// POST    /segment                               : Добавляет сегмент (description из body), возвращает ID
 
-// POST     /rotation/{IDSlot}/{IDBanner}          : Добавляет баннер в ротацию в данном слоте.
-// DELETE   /rotation/{IDSlot}/{IDBanner}          : Удаляет баннер в ротацию в данном слоте.
+// POST    /rotation/{slotID}/{bannerID}          : Добавляет баннер в ротацию в данном слоте.
+// DELETE  /rotation/{slotID}/{bannerID}          : Удаляет баннер в ротацию в данном слоте.
 
-// POST     /click/{IDSlot}/{IDBanner}/{IDSegment} : Засчитать переход
+// POST    /click/{slotID}/{bannerID}/{segmentID} : Засчитать переход
 // Увеличивает счетчик переходов на 1 для указанного баннера в данном слоте в указанной группе.
 
-// POST     /choice/{IDSlot}/{IDSegment}           : Возвращает ID баннера который следует показать в данный момент
+// POST    /choice/{slotID}/{segmentID}           : Возвращает ID баннера который следует показать в данный момент
 // в указанном слоте для указанной соц-дем. группы. Увеличивает число показов баннера в группе.
 
-// GET     /stat/{IDBanner}/{IDSegment}           : Возвращает статистику, сколько по баннеру для сегмента
-// показов и переходов
+// GET     /stat/{bannerID}/{segmentID}           : Возвращает статистику по показам и переходам по баннеру для сегмента
 
 type ItemType int
 

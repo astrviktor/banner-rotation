@@ -319,6 +319,18 @@ func TestGetBannerErrors(t *testing.T) {
 		slot, err := s.CreateSlot("slot")
 		require.NoError(t, err)
 
+		bannerA, err := s.CreateBanner("bannerA")
+		require.NoError(t, err)
+
+		err = s.CreateRotation(storage.Rotation{SlotID: slot, BannerID: bannerA})
+		require.NoError(t, err)
+
+		_, err = GetBanner(s, slot, segment)
+		require.NoError(t, err)
+
+		err = s.DeleteRotation(storage.Rotation{SlotID: slot, BannerID: bannerA})
+		require.NoError(t, err)
+
 		_, err = GetBanner(s, slot, segment)
 		require.ErrorIs(t, err, ErrTooFewBannersForSlot)
 

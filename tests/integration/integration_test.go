@@ -305,6 +305,18 @@ func (s *BannerRotationSuite) NoRotationsCreatedForSlot() {
 	slot, err := s.client.CreateSlot("slot")
 	s.Require().NoError(err)
 
+	bannerA, err := s.client.CreateBanner("bannerA")
+	s.Require().NoError(err)
+
+	err = s.client.CreateRotation(slot, bannerA)
+	s.Require().NoError(err)
+
+	_, err = s.client.Choice(slot, segment)
+	s.Require().NoError(err)
+
+	err = s.client.DeleteRotation(slot, bannerA)
+	s.Require().NoError(err)
+
 	_, err = s.client.Choice(slot, segment)
 	s.Require().Error(err)
 }

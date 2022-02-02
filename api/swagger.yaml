@@ -1,0 +1,295 @@
+# Hand-written OpenAPI (v3) spec for our REST server.
+
+openapi: 3.0.1
+info:
+  title: Banner-Rotation REST API
+  description: Методы API для сервиса Banner-Rotation
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:8888
+paths:
+  /status:
+    get:
+      summary: Получение статуса сервиса
+      responses:
+        '200':
+          description: Возвращает ОК
+  /banner:
+    post:
+      summary: Создание баннера
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/description'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id'
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /slot:
+    post:
+      summary: Создание слота
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/description'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id'
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  /segment:
+    post:
+      summary: Создание сегмента
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/description'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id'
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  /rotation/{slotID}/{bannerID}:
+    post:
+      summary: Добавление баннера в ротацию в данном слоте
+      parameters:
+        - in: path
+          name: slotID
+          required: true
+          schema:
+            type: string
+          description: UUID слота
+        - in: path
+          name: bannerID
+          required: true
+          schema:
+            type: string
+          description: UUID баннера
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+    delete:
+      summary: Удаление баннера из ротации в данном слоте
+      parameters:
+        - in: path
+          name: slotID
+          required: true
+          schema:
+            type: string
+          description: UUID слота
+        - in: path
+          name: bannerID
+          required: true
+          schema:
+            type: string
+          description: UUID баннера
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  /click/{slotID}/{bannerID}/{segmentID}:
+    post:
+      summary: Добавление перехода по баннеру в сегменте и слоте
+      parameters:
+        - in: path
+          name: slotID
+          required: true
+          schema:
+            type: string
+          description: UUID слота
+        - in: path
+          name: bannerID
+          required: true
+          schema:
+            type: string
+          description: UUID баннера
+        - in: path
+          name: segmentID
+          required: true
+          schema:
+            type: string
+          description: UUID сегмента
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  /choice/{slotID}/{segmentID}:
+    post:
+      summary: Выбор баннера для показа в данный момент для слота и сегмента
+      parameters:
+        - in: path
+          name: slotID
+          required: true
+          schema:
+            type: string
+          description: UUID слота
+        - in: path
+          name: segmentID
+          required: true
+          schema:
+            type: string
+          description: UUID сегмента
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/id'
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  /stat/{bannerID}/{segmentID}:
+    get:
+      summary: Получение статистики для баннера по сегменту
+      parameters:
+        - in: path
+          name: bannerID
+          required: true
+          schema:
+            type: string
+          description: UUID баннера
+        - in: path
+          name: segmentID
+          required: true
+          schema:
+            type: string
+          description: UUID сегмента
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/stat'
+        '400':
+          description: Incorrect parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+components:
+  schemas:
+    description:
+      type: object
+      properties:
+        description:
+          type: string
+    id:
+      type: object
+      properties:
+        id:
+          type: string
+    error:
+      type: object
+      properties:
+        error:
+          type: string
+    stat:
+      type: object
+      properties:
+        showCount:
+          type: integer
+        clickCount:
+          type: integer
