@@ -348,7 +348,7 @@ func (s *Storage) GetStatForBannerAndSegment(bannerID, segmentID string) (storag
 	rows.Next()
 	err = rows.Scan(&stat.ShowCount, &stat.ClickCount)
 	if errors.Is(err, sql.ErrNoRows) {
-		return storage.Stat{}, errors.New("данные не найдены")
+		return storage.Stat{}, errors.New("stat not found")
 	}
 
 	if err != nil {

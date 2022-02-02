@@ -40,7 +40,7 @@ func (c *Client) GetStatus() error {
 	}
 
 	if resp.StatusCode != http.StatusOK || string(body) != "OK" {
-		return errors.New("status сервиса не OK")
+		return errors.New("service status is not OK")
 	}
 	return nil
 }
@@ -101,7 +101,7 @@ func (c *Client) CreateItem(item ItemType, description string) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("ошибка при создании")
+		return "", errors.New("error while creating")
 	}
 	return responseID.ID, nil
 }
@@ -123,7 +123,7 @@ func (c *Client) CreateRotation(slotID, bannerID string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.New("ошибка при добавлении ротации")
+		return errors.New("error when adding rotation")
 	}
 	return nil
 }
@@ -145,7 +145,7 @@ func (c *Client) Click(slotID, bannerID, segmentID string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.New("ошибка при учете перехода для баннера")
+		return errors.New("error when counting click for the banner")
 	}
 	return nil
 }
@@ -178,7 +178,7 @@ func (c *Client) Choice(slotID, segmentID string) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("ошибка при получении баннера для показа")
+		return "", errors.New("error getting banner to show")
 	}
 	return responseID.ID, nil
 }
@@ -211,7 +211,7 @@ func (c *Client) GetStat(bannerID, segmentID string) (ResponseStat, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return ResponseStat{}, errors.New("ошибка при получении статистики")
+		return ResponseStat{}, errors.New("error while getting stat")
 	}
 	return responseStat, nil
 }
