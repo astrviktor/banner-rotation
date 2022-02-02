@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -10,6 +9,8 @@ import (
 
 type Config struct {
 	HTTPServer HTTPServerConfig
+	DB         DBConfig
+	Kafka      KafkaConfig
 }
 
 type HTTPServerConfig struct {
@@ -17,18 +18,29 @@ type HTTPServerConfig struct {
 	Port string `yaml:"port"`
 }
 
-func NewConfig(file string) Config {
+type DBConfig struct {
+	DSN                string `yaml:"dsn"`
+	MaxConnectAttempts int    `yaml:"maxConnectAttempts"`
+}
+
+type KafkaConfig struct {
+	Topic              string `yaml:"topic"`
+	BrokerAddress      string `yaml:"brokerAddress"`
+	MaxConnectAttempts int    `yaml:"maxConnectAttempts"`
+}
+
+func NewConfig(name string) Config {
 	var config Config
 
-	yamlFile, err := os.ReadFile(file)
+	file, err := os.ReadFile(name)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return DefaultConfig()
 	}
 
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.Unmarshal(file, &config)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return DefaultConfig()
 	}
 
@@ -40,5 +52,7 @@ func DefaultConfig() Config {
 
 	return Config{
 		HTTPServerConfig{Host: "", Port: "8888"},
+		DBConfig{DSN: "postgres://user:password@postgres:5432/banner_rotation", MaxConnectAttempts: 5},
+		KafkaConfig{Topic: "events", BrokerAddress: "kafka:9092", MaxConnectAttempts: 5},
 	}
 }

@@ -45,7 +45,6 @@ jobs:
         #working-directory: ${{ env.BRANCH }}
 
   build:
-    name: Build
     runs-on: ubuntu-latest
     needs: [lint, test]
     steps:

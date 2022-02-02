@@ -8,7 +8,7 @@ import (
 
 type Storage interface {
 	Connect() error
-	Close() error
+	Close()
 	CreateSlot(description string) (string, error)
 	CreateBanner(description string) (string, error)
 	CreateSegment(description string) (string, error)

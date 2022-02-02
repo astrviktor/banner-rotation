@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,8 +10,16 @@ import (
 	"github.com/astrviktor/banner-rotation/internal/config"
 )
 
+var configFile string
+
+func init() {
+	flag.StringVar(&configFile, "config", "config.yaml", "Path to configuration file")
+}
+
 func main() {
-	config := config.DefaultConfig()
+	flag.Parse()
+
+	config := config.NewConfig(configFile)
 
 	app := app.New(config)
 

@@ -13,6 +13,10 @@ func GetBanner(s storage.Storage, slotID, segmentID string) (string, error) {
 		return storage.EmptyID, err
 	}
 
+	if len(bannersID) == 0 {
+		return storage.EmptyID, ErrTooFewBannersForSlot
+	}
+
 	// 2. для каждого баннера посчитать количество показов для сегмента (независимо от слотов)
 	// если для баннера 0 показов, можно сразу его вернуть для показа
 
@@ -25,7 +29,7 @@ func GetBanner(s storage.Storage, slotID, segmentID string) (string, error) {
 	for _, bannerID := range bannersID {
 		stat, err := s.GetStatForBannerAndSegment(bannerID, segmentID)
 		if err != nil {
-			return storage.EmptyID, ErrGetStat
+			return storage.EmptyID, err
 		}
 
 		if stat.ClickCount > stat.ShowCount {
