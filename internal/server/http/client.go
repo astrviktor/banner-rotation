@@ -128,6 +128,28 @@ func (c *Client) CreateRotation(slotID, bannerID string) error {
 	return nil
 }
 
+func (c *Client) DeleteRotation(slotID, bannerID string) error {
+	url := "http://" + c.addr + "/rotation/" + slotID + "/" + bannerID
+
+	req, err := http.NewRequestWithContext(context.Background(), "DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{Timeout: c.timeout}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("error when adding rotation")
+	}
+	return nil
+}
+
 func (c *Client) Click(slotID, bannerID, segmentID string) error {
 	url := "http://" + c.addr + "/click/" + slotID + "/" + bannerID + "/" + segmentID
 
