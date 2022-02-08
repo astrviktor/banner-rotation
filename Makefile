@@ -1,5 +1,6 @@
 BIN := "./bin/banner-rotation"
 DOCKER_IMG="banner-rotation:develop"
+CONTAINER_NAME="banner-rotation"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -18,6 +19,13 @@ build-img:
 
 run-img: build-img
 	docker run -p 8888:8888 $(DOCKER_IMG)
+
+run-detached-img: build-img
+	docker run -d --name $(CONTAINER_NAME) -p 8888:8888 $(DOCKER_IMG)
+
+stop-detached-img:
+	docker stop $(CONTAINER_NAME)
+	docker rm $(CONTAINER_NAME)
 
 test:
 	go test -count=100 -race -timeout=5m ./...
