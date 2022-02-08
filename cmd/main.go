@@ -13,13 +13,14 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "config.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "config_local.yaml", "Path to configuration file")
 }
 
 func main() {
 	flag.Parse()
 
 	config := config.NewConfig(configFile)
+	//config := config.NewConfig("/home/astrviktor/golang/src/banner-rotation/configs/config_local.yaml")
 
 	app := app.New(config)
 

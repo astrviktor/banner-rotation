@@ -19,15 +19,19 @@ type HTTPServerConfig struct {
 }
 
 type DBConfig struct {
+	Mode               string `yaml:"mode"`
 	DSN                string `yaml:"dsn"`
 	MaxConnectAttempts int    `yaml:"maxConnectAttempts"`
 }
 
 type KafkaConfig struct {
+	Use                bool   `yaml:"use"`
 	Topic              string `yaml:"topic"`
 	BrokerAddress      string `yaml:"brokerAddress"`
 	MaxConnectAttempts int    `yaml:"maxConnectAttempts"`
 }
+
+const DBMemoryMode string = "memory"
 
 func NewConfig(name string) Config {
 	var config Config
@@ -52,7 +56,7 @@ func DefaultConfig() Config {
 
 	return Config{
 		HTTPServerConfig{Host: "", Port: "8888"},
-		DBConfig{DSN: "postgres://user:password@postgres:5432/banner_rotation", MaxConnectAttempts: 5},
-		KafkaConfig{Topic: "events", BrokerAddress: "kafka:9092", MaxConnectAttempts: 5},
+		DBConfig{Mode: "memory", DSN: "postgres://user:password@postgres:5432/banner_rotation", MaxConnectAttempts: 5},
+		KafkaConfig{Use: false, Topic: "events", BrokerAddress: "kafka:9092", MaxConnectAttempts: 5},
 	}
 }
