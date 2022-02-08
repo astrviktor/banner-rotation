@@ -2,7 +2,7 @@ httpserver:
   host:
   port: 8888
 db:
-  mode: memory
+  mode: memory # memory, sql
   dsn: postgres://user:password@postgres:5432/banner_rotation
   maxConnectAttempts: 5
 kafka:

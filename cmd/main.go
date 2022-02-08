@@ -20,7 +20,6 @@ func main() {
 	flag.Parse()
 
 	config := config.NewConfig(configFile)
-	//config := config.NewConfig("/home/astrviktor/golang/src/banner-rotation/configs/config_local.yaml")
 
 	app := app.New(config)
 
