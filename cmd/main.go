@@ -13,7 +13,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "config_local.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "config.yaml", "Path to configuration file")
 }
 
 func main() {

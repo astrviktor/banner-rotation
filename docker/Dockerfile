@@ -30,7 +30,7 @@ LABEL MAINTAINERS="astrviktor@gmail.com"
 ENV BIN_FILE "/opt/banner-rotation/banner-rotation-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
 
-ENV CONFIG_FILE /etc/banner-rotation/config_local.yaml
-COPY ./configs/config_local.yaml ${CONFIG_FILE}
+ENV CONFIG_FILE /etc/banner-rotation/config.yaml
+COPY ./configs/config.yaml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}
