@@ -15,9 +15,11 @@ import (
 )
 
 type Storage struct {
+	mode                    string
 	dsn                     string
 	dbMaxConnectAttempts    int
 	db                      *sql.DB
+	kafkaUse                bool
 	kafkaTopic              string
 	kafkaBrokerAddress      string
 	kafkaMaxConnectAttempts int
@@ -26,9 +28,11 @@ type Storage struct {
 
 func New(config config.Config) *Storage {
 	return &Storage{
+		mode:                    config.DB.Mode,
 		dsn:                     config.DB.DSN,
 		dbMaxConnectAttempts:    config.DB.MaxConnectAttempts,
 		db:                      nil,
+		kafkaUse:                config.Kafka.Use,
 		kafkaTopic:              config.Kafka.Topic,
 		kafkaBrokerAddress:      config.Kafka.BrokerAddress,
 		kafkaMaxConnectAttempts: config.Kafka.MaxConnectAttempts,
@@ -57,22 +61,24 @@ func (s *Storage) Connect() error {
 	log.Println("connect to db OK")
 	s.db = db
 
-	var conn *kafka.Conn
-	for i := 0; i < s.kafkaMaxConnectAttempts; i++ {
-		conn, err = kafka.DialLeader(context.Background(), "tcp", s.kafkaBrokerAddress, s.kafkaTopic, 0)
-		if err == nil {
-			break
+	if s.kafkaUse {
+		var conn *kafka.Conn
+		for i := 0; i < s.kafkaMaxConnectAttempts; i++ {
+			conn, err = kafka.DialLeader(context.Background(), "tcp", s.kafkaBrokerAddress, s.kafkaTopic, 0)
+			if err == nil {
+				break
+			}
+			log.Println("trying to connect to kafka...")
+			time.Sleep(5 * time.Second)
 		}
-		log.Println("trying to connect to kafka...")
-		time.Sleep(5 * time.Second)
-	}
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	log.Println("connect to kafka OK")
-	s.kafka = conn
+		log.Println("connect to kafka OK")
+		s.kafka = conn
+	}
 	return nil
 }
 
@@ -276,20 +282,22 @@ func (s *Storage) CreateEvent(slotID, bannerID, segmentID string, action storage
 	}
 
 	// положить event в kafka
-	bytes, err := json.Marshal(event)
-	if err != nil {
-		return err
+	if s.kafkaUse {
+		bytes, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.kafka.WriteMessages(kafka.Message{
+			Value: bytes,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		log.Println("write event to kafka")
 	}
-
-	_, err = s.kafka.WriteMessages(kafka.Message{
-		Value: bytes,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	log.Println("write event to kafka")
 
 	return nil
 }

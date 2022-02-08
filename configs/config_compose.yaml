@@ -2,11 +2,11 @@ httpserver:
   host:
   port: 8888
 db:
-  mode: memory # memory, sql
+  mode: sql # memory, sql
   dsn: postgres://user:password@postgres:5432/banner_rotation
   maxConnectAttempts: 5
 kafka:
-  use: false
+  use: true
   topic: events
   brokerAddress: kafka:9092
   maxConnectAttempts: 5

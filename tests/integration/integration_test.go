@@ -17,6 +17,9 @@ type BannerRotationSuite struct {
 }
 
 func (s *BannerRotationSuite) SetupSuite() {
+	// wait project up
+	time.Sleep(15 * time.Second)
+
 	host := os.Getenv("SERVICE_HOST")
 	port := os.Getenv("SERVICE_PORT")
 
